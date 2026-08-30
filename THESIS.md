@@ -1,6 +1,10 @@
 # Eco Basket protocol
 
-Eco Basket creates a simple flywheel: buys fund steady TWAP purchases across the narrative, while sells fund token buybacks and deeper liquidity. That support can attract more activity, and each new trade feeds the loop again—growing the pie for the whole basket.
+Buys grow the basket. Sells strengthen the token.
+
+Eco Basket lets creators launch tokens on hookr.fun. Each token turns trading fees into a flywheel for its chosen narrative. Buys fund scheduled TWAP purchases across the basket. Sells fund token buybacks and deeper liquidity. More activity feeds the loop and grows the pie for the whole basket.
+
+One reusable Uniswap v4 hook powers every Eco Basket launch on hookr.fun. Each pool keeps its own immutable basket, vault and fee rules.
 
 ## How one Eco token works
 
