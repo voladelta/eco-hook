@@ -1,10 +1,6 @@
 # Eco Basket protocol
 
-Buys grow the basket. Sells strengthen the token.
-
-Eco Basket lets creators launch tokens whose trading fees support a chosen narrative. Buys fund scheduled basket purchases. Sells fund token buybacks and deeper liquidity.
-
-One reusable Uniswap v4 hook powers every launch. Each pool keeps its own immutable basket, vault and fee rules.
+Eco Basket creates a simple flywheel: buys fund steady TWAP purchases across the narrative, while sells fund token buybacks and deeper liquidity. That support can attract more activity, and each new trade feeds the loop again—growing the pie for the whole basket.
 
 ## How one Eco token works
 
@@ -299,7 +295,7 @@ Only the factory can register a new Eco pool.
                     ECO PROTOCOL
                          │
           ┌──────────────┼──────────────┐
-          ▼              ▼              ▼
+          ▼             ▼             ▼
    EcoLaunchFactory  EcoBasketHook   NarrativeOrderHub
           │              │              │
           │              │              └─ Executes scheduled buys
