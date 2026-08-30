@@ -15,10 +15,10 @@ The creator also chooses a reviewed fee preset and purchase schedule.
 For example:
 
 ```text
-Token:             PONECO
+Token:             HOOKRECO
 Quote asset:       ETH
-Main token:        PON
-Related tokens:    Token A, Token B, Token C, Token D, Token E
+Main token:        HOOKR
+Related tokens:    5 selected Hookr tokens
 Fee preset:        Balanced
 Purchase schedule: 7 days
 ```
@@ -26,16 +26,16 @@ Purchase schedule: 7 days
 Trading then creates a simple loop:
 
 ```text
-Buy PONECO
+Buy HOOKRECO
     │
-    ├─ 80% of the Eco fee buys PON and related tokens over time
-    ├─ 10% buys back PONECO
-    └─ 10% builds PONECO liquidity
+    ├─ 80% of the Eco fee buys HOOKR and related tokens over time
+    ├─ 10% buys back HOOKRECO
+    └─ 10% builds HOOKRECO liquidity
 
-Sell PONECO
+Sell HOOKRECO
     │
-    ├─ 50% of the Eco fee buys back PONECO
-    └─ 50% builds PONECO liquidity
+    ├─ 50% of the Eco fee buys back HOOKRECO
+    └─ 50% builds HOOKRECO liquidity
 ```
 
 The hook collects the fee during the swap. The vault records its destination. The order executor makes scheduled purchases later.
