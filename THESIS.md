@@ -1,16 +1,10 @@
 # Eco Basket protocol
 
-## Summary
+Buys grow the basket. Sells strengthen the token.
 
-> Buys grow the basket. Sells strengthen the token.
->
-> Eco Basket lets creators launch tokens whose trading fees support a chosen narrative. Buys fund scheduled basket purchases. Sells fund token buybacks and deeper liquidity.
->
-> One reusable Uniswap v4 hook powers every launch. Each pool keeps its own immutable basket, vault and fee rules.
+Eco Basket lets creators launch tokens whose trading fees support a chosen narrative. Buys fund scheduled basket purchases. Sells fund token buybacks and deeper liquidity.
 
-We will launch `HOOKRECO` as the first working example. It will use the same public factory and rules as every later launch.
-
-The full protocol will default to 0.75% on buys and 0.25% on sells. A first Hookr module can start with 1% on buys and no fixed sell fee.
+One reusable Uniswap v4 hook powers every launch. Each pool keeps its own immutable basket, vault and fee rules.
 
 ## How one Eco token works
 
