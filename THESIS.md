@@ -301,7 +301,7 @@ HOOKR LAUNCHPAD
               ECO PROTOCOL
                     │
         ┌───────────┼──────────────┐
-        ▼           ▼              ▼
+        ▼          ▼             ▼
  EcoBasketHook  EcoPoolRegistry  NarrativeOrderHub
         │           │              │
         │           │              └─ Executes scheduled buys
