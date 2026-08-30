@@ -2,9 +2,9 @@
 
 Buys grow the basket. Sells strengthen the token.
 
-Eco Basket lets creators launch tokens on hookr.fun. Each token turns trading fees into a flywheel for its chosen narrative. Buys fund scheduled TWAP purchases across the basket. Sells fund token buybacks and deeper liquidity. More activity feeds the loop and grows the pie for the whole basket.
+Eco Basket is a Uniswap v4 hook for tokens launched on hookr.fun. Creators select it at launch to turn trading fees into a flywheel for their chosen narrative. Buys fund scheduled TWAP purchases across the basket. Sells fund token buybacks and deeper liquidity. More activity feeds the loop and grows the pie for the whole basket.
 
-One reusable Uniswap v4 hook powers every Eco Basket launch on hookr.fun. Each pool keeps its own immutable basket, vault and fee rules.
+Hookr handles the token launch and creates the Uniswap v4 pool. Eco Basket handles the fee strategy, basket and vault. Each pool keeps its own immutable rules.
 
 ## How one Eco token works
 
@@ -44,7 +44,7 @@ This separation keeps user trades small and predictable. A trade does not depend
 
 ## Core product decisions
 
-### Use one shared hook for each version
+### Publish one reviewed hook for each version
 
 One `EcoBasketHook` can serve many pools. Each pool gets its own configuration and vault.
 
@@ -64,13 +64,13 @@ EcoBasketHookV2
 EcoBasketHookV3
 ```
 
-Pools launched on V1 stay on V1. New pools can use a later version after review.
+Pools launched with V1 stay on V1. New Hookr launches can select a later version after review.
 
 We will not build a hook that works only for `HOOKRECO`. We will also avoid one upgradeable hook that can change every pool after launch.
 
 ### Launch HOOKRECO as the first example
 
-`HOOKRECO` will prove the shared protocol in production. It will use the same factory and validation rules as later launches.
+`HOOKRECO` will prove the shared protocol in production. It will launch through Hookr and select the same published Eco hook as later creators.
 
 An example configuration is:
 
@@ -195,9 +195,11 @@ Liquidity reserve:         $1.25
 
 Buys grow the chosen narrative. Sell fees stay inside the token's home market.
 
-### Start the Hookr module with the Growth preset
+### Use Growth only if Hookr limits the first release
 
-Hookr's current fee cuts apply to exact-input buys. The simplest first module should use:
+The target Hookr integration should use the Balanced preset. This needs correct fee accounting for buys, sells, exact-input swaps and exact-output swaps.
+
+Hookr's current hook-block cuts apply to exact-input buys. If the first integration has the same limit, it should use this temporary preset:
 
 ```text
 1% buy contribution
@@ -205,13 +207,15 @@ No fixed sell contribution
 Depth-sensitive Surge Fee for large sells
 ```
 
-This version fits Hookr's current buy-cut design. It avoids a permanent exit fee and still provides a clear basket budget.
+The Growth preset fits Hookr's current buy-cut design. It avoids a permanent exit fee and still provides a clear basket budget.
+
+We should move to Balanced only after the Hookr router and Eco hook pass all swap-mode tests.
 
 ### Offer reviewed fee presets
 
 Creators should select a reviewed preset. They should not choose an arbitrary fee between 0% and 10%.
 
-Arbitrary fees encourage low-quality launches to select high rates. They can also reduce trust in every Eco launch.
+Arbitrary fees encourage low-quality launches to select high rates. They can also reduce trust in every Eco Basket pool.
 
 Use these presets:
 
@@ -228,7 +232,7 @@ The contract should enforce this limit:
 buyStrategyFeeBps + sellStrategyFeeBps <= 100;
 ```
 
-The factory makes the selected preset immutable when trading opens. Users must see the full fee schedule before they buy.
+The Hookr launch flow must make the selected preset immutable when the pool opens. Users must see the full fee schedule before they sign and before they buy.
 
 ### Use Surge Fees for large trades
 
@@ -246,80 +250,67 @@ A 3% sell fee reduces the seller's proceeds but does not stop the sale. A 3% fee
 
 See the [detailed fee calculations and rejected designs](#fee-calculations-and-rejected-designs).
 
-## How creators launch
+## How creators use Eco Basket
 
-A creator opens the Eco launch page and enters settings such as:
+A creator starts a new-token launch on Hookr. They choose the launch model, then select Eco Basket at the Hook step.
+
+The creator enters the Eco settings as part of that launch:
 
 ```text
-Name:              Pon Ecosystem
-Symbol:            PONECO
+Name:              Hookr Ecosystem
+Symbol:            HOOKRECO
 Quote asset:       ETH
 
-Main token:        PON
+Main token:        HOOKR
 Main weight:       40%
 
-Related token 1:   Token A — 15%
-Related token 2:   Token B — 15%
-Related token 3:   Token C — 10%
-Related token 4:   Token D — 10%
-Related token 5:   Token E — 10%
+Related token 1:   Hookr token A — 15%
+Related token 2:   Hookr token B — 15%
+Related token 3:   Hookr token C — 10%
+Related token 4:   Hookr token D — 10%
+Related token 5:   Hookr token E — 10%
 
 Fee preset:        Balanced
 Purchase schedule: 7 days
 ```
 
-The launch factory then runs one controlled sequence:
+Hookr then runs the launch:
 
-1. Deploy the PONECO token.
-2. Deploy the PONECO vault.
-3. Validate the basket and fee preset.
-4. Register the configuration in `EcoBasketHook`.
-5. Create the PONECO and ETH pool with `EcoBasketHook`.
-6. Add and lock the initial liquidity.
-7. Freeze the configuration.
-8. Open trading.
+1. Hookr validates the launch path, token settings and Eco configuration.
+2. Hookr creates the token and fixes the launch terms.
+3. Hookr and Eco compute the expected pool identity.
+4. The Eco integration records the pool configuration and creates its vault.
+5. Hookr opens the pool at launch or after a successful auction.
+6. The pool opens with `EcoBasketHook` attached.
+7. The Eco configuration becomes immutable.
+8. Trading starts through Hookr's bounded router.
 
-The factory can expose this interface:
-
-```solidity
-function launch(EcoLaunchParams calldata params)
-    external
-    returns (
-        address token,
-        PoolId poolId,
-        address vault
-    );
-```
-
-Only the factory can register a new Eco pool.
+The exact contract calls depend on Hookr's integration interface. Eco must not create a second launchpad or replace Hookr's launch contracts.
 
 ## System architecture
 
 ```text
-                    ECO PROTOCOL
-                         │
-          ┌──────────────┼──────────────┐
-          ▼             ▼             ▼
-   EcoLaunchFactory  EcoBasketHook   NarrativeOrderHub
-          │              │              │
-          │              │              └─ Executes scheduled buys
-          │              │
-          │              └─ Routes fees to each pool's vault
-          │
-          ├─ Creates HOOKRECO
-          │      ├─ HOOKRECO / ETH pool
-          │      ├─ EcoVault A
-          │      └─ Basket: HOOKR + 5 tokens
-          │
-          ├─ Creates PONECO
-          │      ├─ PONECO / ETH pool
-          │      ├─ EcoVault B
-          │      └─ Basket: PON + 5 tokens
-          │
-          └─ Creates AIECO
-                 ├─ AIECO / ETH pool
-                 ├─ EcoVault C
-                 └─ Basket: AI main token + 9 tokens
+HOOKR LAUNCHPAD
+    │
+    ├─ Creates the token
+    ├─ Opens the canonical pool
+    ├─ Locks the launch liquidity
+    └─ Attaches the selected EcoBasketHook
+                    │
+                    ▼
+              ECO PROTOCOL
+                    │
+        ┌───────────┼──────────────┐
+        ▼           ▼              ▼
+ EcoBasketHook  EcoPoolRegistry  NarrativeOrderHub
+        │           │              │
+        │           │              └─ Executes scheduled buys
+        │           │
+        │           └─ Stores each pool's immutable rules and vault
+        │
+        ├─ HOOKRECO / ETH → EcoVault A → HOOKR + 5 tokens
+        ├─ PONECO / ETH   → EcoVault B → PON + 5 tokens
+        └─ AIECO / ETH    → EcoVault C → AI main token + 9 tokens
 ```
 
 ### Deploy shared contracts once
@@ -327,19 +318,24 @@ Only the factory can register a new Eco pool.
 We deploy these contracts once for each protocol version:
 
 - `EcoBasketHookV1`
-- `EcoLaunchFactory`
+- `EcoPoolRegistry`
+- `EcoVaultFactory`
 - `EcoVault` implementation
 - `EcoStaking` implementation
 - `NarrativeOrderHub`
 - `LiquidityManager`
-- `EcoRouter`
+
+Eco should use Hookr's bounded router. It should not add another public trade route unless the hook needs one for a proven accounting constraint.
 
 ### Deploy isolated state for each launch
 
-Each launch creates:
+Hookr creates:
 
 - one plain ERC-20 strategy token
 - one Uniswap v4 pool for the strategy token and quote token
+
+The Eco integration creates:
+
 - one dedicated vault
 - one staking and reward instance
 - one immutable basket and fee configuration
@@ -367,16 +363,28 @@ The hook must not buy external tokens inside `beforeSwap` or `afterSwap`. That w
 
 ## Hookr strategy
 
-### Build independently and prepare for Hookr
+### Integrate at the Hook step
 
-We should build the reusable Eco protocol independently now. We should also design its swap interface as a future Hookr module.
+Hookr is the launchpad. Its new-token flow covers intent, launch model, hook, token, price and fees, and review. A creator should select Eco Basket at the Hook step. See the [Hookr launch flow][6].
 
-This approach combines 2 routes:
+Hookr then owns:
 
-- launch through our own factory first
-- add Eco Basket to Hookr's shared hook later
+- token creation
+- the instant or auction launch path
+- pool creation
+- locked launch liquidity
+- the canonical market record
+- the bounded trade router
 
-It gives us control of the first release without closing the better long-term integration.
+Eco owns:
+
+- basket validation
+- strategy fee accounting
+- vault creation
+- scheduled basket purchases
+- token buybacks
+- additional strategy-owned liquidity
+- staking and rewards
 
 ### One pool cannot use 2 hooks
 
@@ -388,67 +396,13 @@ HookrHook + EcoBasketHook
 
 The same hook contract can still serve many pools. See [Uniswap v4 hooks][1].
 
-Hookr currently uses one shared hook with selectable behaviours:
+Hookr lets creators compose behaviours into one hook. The pool opens with that hook already attached, and nobody can replace or retune it later. See [Hookr's explanation of hook blocks][7].
 
-```text
-Hookr shared hook
-    ├─ Anti-Snipe
-    ├─ Surge Fees
-    ├─ Auto Burn
-    ├─ LP Rewards
-    └─ Nth-buy Pot
-```
+Eco Basket must therefore be a complete Hookr-compatible hook or a typed block within a Hookr-compiled hook. It cannot attach beside another hook.
 
-Eco Basket must become part of that composite hook or replace it for a pool.
+### Publish Eco Basket as a selectable hook
 
-### Build the Eco launchpad first
-
-The independent route deploys:
-
-```text
-EcoLaunchFactory
-EcoBasketHook
-EcoRouter
-Eco frontend
-```
-
-The launcher uses the same Uniswap v4 `PoolManager` on Robinhood Chain. It does not depend on Hookr's current launcher.
-
-This route gives us control of:
-
-- token creation
-- basket validation
-- fee routing
-- vault creation
-- scheduled purchase execution
-- staking
-- protocol-owned liquidity
-
-These launches will not become official Hookr launches unless Hookr adds an integration.
-
-The Eco launchpad can still use tokens launched through Hookr as basket assets.
-
-### Add Eco Basket as a Hookr block later
-
-The best final Hookr experience adds Eco Basket to the shared Hookr hook:
-
-```text
-Hookr shared hook
-    ├─ Anti-Snipe
-    ├─ Surge Fees
-    ├─ Auto Burn
-    ├─ LP Rewards
-    ├─ Nth-buy Pot
-    └─ Eco Basket
-```
-
-The creator then selects a basket, purchase schedule, reward mode and fee preset in the Hookr builder.
-
-Hookr must add the module to its hook, launcher, router, registry and frontend.
-
-### Keep a complete custom hook as a fallback
-
-A creator could select `EcoBasketHook` as the pool's only custom hook. That hook could include compatible behaviours:
+A creator should be able to choose a reviewed Eco Basket version from Hookr's hook marketplace. The selected hook can include compatible launch behaviours:
 
 ```text
 Eco Basket
@@ -459,9 +413,19 @@ Eco Basket
 
 This is one composite hook, not a second hook.
 
-On 30 August 2026, Hookr's V6.1 Builder is a source-only preview. It does not provide wallet deployment or a live address. See the [Hookr custom hook builder][2].
+The Hookr integration must register the hook and connect its launch parameters to the Eco pool registry. The launch review must show the basket, fee preset, schedule and hook address before the creator signs.
 
-We should not depend on this self-service route for the first release.
+### Add a typed Eco block later
+
+A later Hookr compiler could offer Eco Basket as a typed block. This would let creators combine it with other compatible blocks without deploying a second hook.
+
+This route needs changes to Hookr's compiler, launcher, router, registry and frontend. The first integration does not need to wait for this more general interface.
+
+### Do not build an Eco launchpad
+
+Eco should not create tokens, choose opening prices or manage launch liquidity. Building those features again would duplicate Hookr and split the canonical launch record.
+
+We can test the contracts with local fixtures and test launch adapters. Production launches must go through Hookr.
 
 ## Limits and open questions
 
@@ -477,7 +441,7 @@ PONECO / USDC without EcoBasketHook
 
 Only trades through the canonical Eco pool contribute to its strategy.
 
-The launch system should therefore:
+The Hookr integration should therefore:
 
 - put all initial liquidity in the canonical pool
 - lock that liquidity
@@ -509,9 +473,11 @@ These thresholds are proposals. We must test them against liquidity depth, trade
 
 The hook must not let exact-output trades avoid the Eco fee. The implementation must prove both trade paths before release.
 
-### Hookr availability can change
+### Launch after Hookr V6.1
 
-The Hookr integration plan depends on its live contracts, builder and module interface. We must check the current release before implementation.
+Hookr will launch V6.1 first. Eco Basket will integrate and launch after that release.
+
+Before implementation, we must confirm Hookr's deployed contracts, promoted release manifest and integration interface.
 
 ## Implementation reference
 
@@ -640,21 +606,21 @@ Uniswap v4 hook deltas support this accounting model. See the [Uniswap v4 hook i
 
 ### Protect pool initialization
 
-Anyone can normally ask the Uniswap v4 `PoolManager` to initialize a pool. The Eco hook must reject pools that our factory did not prepare.
+Anyone can normally ask the Uniswap v4 `PoolManager` to initialize a pool. The Eco hook must reject pools that the approved Hookr launch flow did not prepare.
 
-The factory uses this sequence:
+The Hookr integration should use this sequence:
 
 ```text
-Factory deploys token and vault
+Hookr creates the token and fixes the launch terms
         │
         ▼
-Factory computes expected PoolKey and PoolId
+Hookr and Eco compute the expected PoolKey and PoolId
         │
         ▼
-Factory registers a pending configuration
+The approved Hookr adapter registers the Eco configuration and vault
         │
         ▼
-Factory initializes the exact pool
+Hookr initializes the exact pool at launch or auction migration
         │
         ▼
 EcoBasketHook verifies the pending configuration
@@ -672,24 +638,31 @@ function preparePool(
     PoolKey calldata key,
     address vault,
     bytes32 configHash
-) external onlyFactory;
+) external onlyHookrAdapter;
 
 function beforeInitialize(
     address,
     PoolKey calldata key,
     uint160
-) external returns (bytes4) {
+) external onlyPoolManager returns (bytes4) {
     PoolId id = key.toId();
 
     if (pendingConfigHash[id] == bytes32(0)) {
         revert UnregisteredPool();
     }
 
+    delete pendingConfigHash[id];
+    poolConfigs[id].active = true;
+
     return this.beforeInitialize.selector;
 }
 ```
 
-This check stops another person from registering an unauthorised pool under the Eco name.
+This check stops another person from registering an unauthorised pool under the Eco name. The adapter needs a narrow interface that Hookr can call during an instant launch or auction migration.
+
+An instant launch should prepare and activate the Eco pool in one transaction. A failed step should revert the whole launch.
+
+An auction needs an explicit pending state because the pool opens later. A failed auction must cancel or expire its pending Eco configuration. The vault must not accept strategy funds until the pool becomes active.
 
 ### Fee calculations and rejected designs
 
@@ -715,7 +688,7 @@ The approximate costs are:
 
 The table assumes that the market price does not change during the round trip. It applies the buy and sell costs in sequence.
 
-These totals apply when Eco runs inside Hookr's eligible ETH-pair fee stack. An independent Eco pool does not pay Hookr's protocol fee unless an integration adds it.
+These totals are proposals for Eco inside Hookr's eligible ETH-pair fee stack. They do not describe a live Eco Basket launch.
 
 The values exclude:
 
@@ -808,10 +781,11 @@ Uniswap v4 hooks can change swap deltas and support dynamic fees. The mechanism 
 
 ## Delivery sequence
 
-Use the [Eco Basket launch order](PLAN.md) to move from this thesis into implementation.
+Use the [Hookr integration order](PLAN.md) to move from this thesis into implementation.
 
 [1]: https://docs.uniswap.org/contracts/v4/concepts/hooks "Uniswap v4 hooks"
-[2]: https://hookr.fun/builder "Build a custom hook with Hookr"
 [3]: https://hookr.fun/docs "Hookr launchpad documentation"
 [4]: https://blog.uniswap.org/what-is-an-automated-market-maker "How automated market makers use liquidity"
 [5]: https://github.com/Uniswap/v4-core/blob/main/src/libraries/Hooks.sol "Uniswap v4 Hooks library"
+[6]: https://hookr.fun/launch "Launch a programmable market on Hookr"
+[7]: https://hookr.fun/learn/uniswap-v4-hooks "How Hookr composes Uniswap v4 hooks"
