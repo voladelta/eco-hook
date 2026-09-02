@@ -9,7 +9,7 @@
   "author": { "github": "voladelta" },
   "source": {
     "repository": "https://github.com/voladelta/eco-hook",
-    "pinnedCommit": "eb39179cb0e97dffdde1dddfdab8cad444f13612",
+    "pinnedCommit": "a5f9ebd3da28911bc8d99194126869cab38eca64",
     "license": "MIT",
     "hookContract": "src/EcoBasketHook.sol",
     "contracts": ["src/EcoBasketHook.sol", "src/EcoPoolRegistry.sol", "src/EcoVault.sol", "src/NarrativeOrderHub.sol"]
@@ -51,7 +51,7 @@
             "family": "pool-swap-test",
             "identity": "Pinned v4-core PoolSwapTest in test/integration/EcoBasketHook.t.sol",
             "status": "source-tested",
-            "evidenceUrls": ["https://github.com/voladelta/eco-hook"]
+            "evidenceUrls": ["https://github.com/voladelta/eco-hook/blob/a5f9ebd3da28911bc8d99194126869cab38eca64/test/integration/EcoBasketHook.t.sol"]
           }]
         },
         "exactInputOneForZero": {
@@ -60,7 +60,7 @@
             "family": "pool-swap-test",
             "identity": "Pinned v4-core PoolSwapTest in test/integration/EcoBasketHook.t.sol",
             "status": "source-tested",
-            "evidenceUrls": ["https://github.com/voladelta/eco-hook"]
+            "evidenceUrls": ["https://github.com/voladelta/eco-hook/blob/a5f9ebd3da28911bc8d99194126869cab38eca64/test/integration/EcoBasketHook.t.sol"]
           }]
         },
         "exactOutputZeroForOne": { "status": "unsupported", "routers": [] },
@@ -85,7 +85,7 @@
         "poolManagerSwapBasis": "pre-after-swap-return-delta",
         "canonicalRouterEvent": null,
         "genericRouterFinalSettlement": "source-tested",
-        "notes": "Pinned local PoolManager tests prove that each exact-input final output equals the pool output less the returned afterSwap fee delta. No public immutable evidence URL exists before the source commit."
+        "notes": "The pinned PoolManager tests prove that each exact-input final output equals the pool output less the returned afterSwap fee delta."
       }
     },
     "dependencies": [

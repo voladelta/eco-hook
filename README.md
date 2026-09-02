@@ -47,13 +47,11 @@ node --test scripts/validate-hookr-manifest.test.mjs
 ./scripts/check.sh
 ```
 
-The Hookr manifest uses the required repository `HEAD` as its draft `pinnedCommit`. The source contracts are not in that commit while this worktree is uncommitted, so the direct manifest command is expected to fail at the pinned-source check:
+The Hookr manifest pins the immutable source commit and route evidence. Run the full schema, semantic, and source check with:
 
 ```sh
 node scripts/validate-hookr-manifest.mjs integrations/hookr/manifest.json
 ```
-
-After these source files are committed and pushed, replace `source.pinnedCommit` with that immutable commit and replace each local source evidence URL with its immutable blob URL before Hookr submission.
 
 ## Hookr scope and status
 

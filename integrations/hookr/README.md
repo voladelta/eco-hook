@@ -4,6 +4,4 @@
 
 This is a source-only standalone external hook draft. It claims multi-pool behavior, the `afterSwap` return-delta flag, local exact-input PoolManager tests, and explicit exact-output rejection. It has one immutable product-owned executor as a trusted custody boundary. This executor is not a Hookr ABI. The source does not implement live external swaps or claim native-block composition, a deployment, an audit, Hookr approval, or production approval.
 
-The schema requires an immutable source commit. The current source is not committed, so the manifest temporarily uses repository `HEAD` (`eb39179cb0e97dffdde1dddfdab8cad444f13612`). The full local validator must fail because that commit does not contain the new contracts. After the source is committed and pushed, update `source.pinnedCommit` and the route evidence URLs before submission.
-
-The validator unit suite can check the pinned PR schema and semantic rules without bypassing the full command's immutable-source check.
+The manifest pins source commit `a5f9ebd3da28911bc8d99194126869cab38eca64` and links each source-tested route to the immutable PoolManager integration test. The full local validator checks the pinned PR schema, semantic rules, and committed contract source.

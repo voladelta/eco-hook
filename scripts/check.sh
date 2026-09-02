@@ -29,7 +29,7 @@ run_step "forge build and sizes" forge build --sizes
 run_step "forge tests" forge test
 hookr_manifest=integrations/hookr/manifest.json
 if [ -f "$hookr_manifest" ]; then
-    run_step "Hookr manifest draft semantic preflight" node scripts/validate-hookr-draft.mjs
+    run_step "Hookr manifest source validation" node scripts/validate-hookr-manifest.mjs "$hookr_manifest"
     run_step "Hookr manifest validator tests" env HOOKR_MANIFEST="$hookr_manifest" node --test scripts/validate-hookr-manifest.test.mjs
 elif [ -f docs/hookr.md ] || [ -d integrations/hookr ]; then
     echo "Hookr integration files exist but integrations/hookr/manifest.json is missing" >&2
