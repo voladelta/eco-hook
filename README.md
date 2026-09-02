@@ -1,3 +1,5 @@
+![Eco Basket protocol banner](docs/assets/eco-basket-banner.png)
+
 # Eco Basket V1
 
 Eco Basket V1 is a source-only Uniswap v4 hook for strategy tokens launched by Hookr. One non-upgradeable hook supports many pools. Each approved pool has immutable fee and basket rules and one isolated vault.
