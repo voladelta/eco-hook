@@ -1,0 +1,8 @@
+{
+  "name": "eco-basket-hook",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:hookr": "node --test scripts/validate-hookr-manifest.test.mjs"
+  }
+}

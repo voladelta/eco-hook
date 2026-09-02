@@ -1,0 +1,186 @@
+{
+  "$schema": "https://hookr.fun/schemas/external-hook.v2.json",
+  "schemaVersion": "hookr.external-hook.v2",
+  "slug": "eco-basket-v1",
+  "name": "Eco Basket V1",
+  "summary": "A source-only multi-pool Uniswap v4 hook that collects bounded exact-input output fees into isolated pool vaults for later basket, buyback, and liquidity accounting.",
+  "status": "source-only",
+  "integrationMode": "standalone-hook-product",
+  "author": { "github": "voladelta" },
+  "source": {
+    "repository": "https://github.com/voladelta/eco-hook",
+    "pinnedCommit": "eb39179cb0e97dffdde1dddfdab8cad444f13612",
+    "license": "MIT",
+    "hookContract": "src/EcoBasketHook.sol",
+    "contracts": ["src/EcoBasketHook.sol", "src/EcoPoolRegistry.sol", "src/EcoVault.sol", "src/NarrativeOrderHub.sol"]
+  },
+  "provenance": {
+    "deploymentModel": "singleton",
+    "factoryContract": null,
+    "factoryInterface": "none",
+    "allowlistedFactoryInterface": false,
+    "creationCodeHashEvidence": "source-derived",
+    "runtimeCodeHashEvidence": "absent",
+    "constructorArgsEvidence": "source-documented",
+    "saltDerivationEvidence": "source-documented",
+    "proxyModel": "non-proxy",
+    "mutableAuthorityReview": "reviewed-none",
+    "operatorDependencyReview": "reviewed-present"
+  },
+  "integration": {
+    "poolScope": "multi-pool",
+    "supportedTracks": ["hook_publication"],
+    "standardSwapBehavior": "Prepared native-quote pools support both exact-input directions with empty hook data. The hook takes a preset fee from the unspecified output currency. Both exact-output directions fail closed because Hookr PR 3 does not publish a gross-up router or quote ABI.",
+    "dedicatedRouter": {
+      "requiredForAllSwaps": false,
+      "contract": "Not published in Hookr PR 3",
+      "purpose": "No Hookr router ABI is assumed. Local PoolManager evidence uses the pinned PoolSwapTest fixture and does not infer payer, recipient, or user identity from callback sender."
+    },
+    "routingCompatibility": {
+      "hookData": {
+        "mode": "arbitrary",
+        "version": null,
+        "maxBytes": null,
+        "trustedFields": [],
+        "emptyDataBehavior": "Empty and non-empty hook data are ignored. Configuration comes only from prepared immutable PoolId state."
+      },
+      "swapMatrix": {
+        "exactInputZeroForOne": {
+          "status": "source-tested",
+          "routers": [{
+            "family": "pool-swap-test",
+            "identity": "Pinned v4-core PoolSwapTest in test/integration/EcoBasketHook.t.sol",
+            "status": "source-tested",
+            "evidenceUrls": ["https://github.com/voladelta/eco-hook"]
+          }]
+        },
+        "exactInputOneForZero": {
+          "status": "source-tested",
+          "routers": [{
+            "family": "pool-swap-test",
+            "identity": "Pinned v4-core PoolSwapTest in test/integration/EcoBasketHook.t.sol",
+            "status": "source-tested",
+            "evidenceUrls": ["https://github.com/voladelta/eco-hook"]
+          }]
+        },
+        "exactOutputZeroForOne": { "status": "unsupported", "routers": [] },
+        "exactOutputOneForZero": { "status": "unsupported", "routers": [] }
+      },
+      "officialUniversalRouter": {
+        "status": "untested",
+        "requiredAddressIdentity": true,
+        "notes": "No deployed Universal Router identity, runtime hash, or final wallet evidence is supplied."
+      },
+      "multihop": {
+        "status": "untested",
+        "notes": "No multihop route is claimed because exact-output swaps are rejected and no public Hookr route ABI is available."
+      },
+      "quoteDiscovery": {
+        "mode": "none",
+        "alfCompatibility": "unsupported",
+        "simulationActorBinding": "not-applicable",
+        "notes": "The source-only release does not publish a quoter and does not claim ALF compatibility."
+      },
+      "finalAmountEvidence": {
+        "poolManagerSwapBasis": "pre-after-swap-return-delta",
+        "canonicalRouterEvent": null,
+        "genericRouterFinalSettlement": "source-tested",
+        "notes": "Pinned local PoolManager tests prove that each exact-input final output equals the pool output less the returned afterSwap fee delta. No public immutable evidence URL exists before the source commit."
+      }
+    },
+    "dependencies": [
+      { "name": "Uniswap v4 PoolManager", "kind": "protocol", "required": true },
+      { "name": "Uniswap v4-periphery BaseHook", "kind": "other", "required": true },
+      {
+        "name": "Hookr external-hook V2 review flow",
+        "kind": "other",
+        "required": true,
+        "notes": "Only the schema, policy, and semantic validator published at Hookr PR 3 head 2b0ee64ed85a2d47037efebb8de144cafa23054e are used."
+      },
+      {
+        "name": "Eco approved executor",
+        "kind": "other",
+        "required": true,
+        "notes": "One immutable product-owned address receives only recorded buyback, liquidity, and due scheduled-order funds. It is a trusted custody boundary, not a Hookr ABI."
+      }
+    ]
+  },
+  "uniswapClassification": {
+    "flags": {
+      "beforeInitialize": true,
+      "afterInitialize": false,
+      "beforeAddLiquidity": false,
+      "afterAddLiquidity": false,
+      "beforeRemoveLiquidity": false,
+      "afterRemoveLiquidity": false,
+      "beforeSwap": false,
+      "afterSwap": true,
+      "beforeDonate": false,
+      "afterDonate": false,
+      "beforeSwapReturnsDelta": false,
+      "afterSwapReturnsDelta": true,
+      "afterAddLiquidityReturnsDelta": false,
+      "afterRemoveLiquidityReturnsDelta": false
+    },
+    "properties": {
+      "dynamicFee": false,
+      "upgradeable": false,
+      "requiresCustomSwapData": false,
+      "customDataMode": "none",
+      "vanillaSwap": false,
+      "swapAccess": "none"
+    },
+    "callbackSemantics": [
+      {
+        "name": "beforeInitialize",
+        "callerAuthorization": "none",
+        "stateScope": "pool-id",
+        "hookData": { "schema": "none", "maxBytes": null, "trustedFields": [] },
+        "returnShape": "selector-only",
+        "deltaUnits": "none",
+        "failureMode": "fail-closed",
+        "externalCalls": true,
+        "reentrancyBoundary": "Pinned BaseHook restricts the callback to the immutable PoolManager. The registry accepts activation only from its immutable hook address and consumes one prepared PoolId atomically.",
+        "gasBoundary": "One registry read and write with no loop. Basket validation and vault creation occur during the earlier adapter preparation call, not in this callback."
+      },
+      {
+        "name": "afterSwap",
+        "callerAuthorization": "none",
+        "stateScope": "pool-id",
+        "hookData": { "schema": "other", "maxBytes": null, "trustedFields": [] },
+        "returnShape": "selector-and-delta",
+        "deltaUnits": "specified-unspecified",
+        "failureMode": "fail-closed",
+        "externalCalls": true,
+        "reentrancyBoundary": "Pinned BaseHook restricts the callback to the immutable PoolManager. The hook reads one active PoolId, takes one output currency amount to that pool vault, and calls the hook-only vault accounting entry point.",
+        "gasBoundary": "The callback has no loop. It performs one registry read, one PoolManager take, and one bounded vault allocation update. External basket trades, buybacks, liquidity changes, and order creation are excluded."
+      }
+    ]
+  },
+  "security": {
+    "auditStatus": "unaudited",
+    "auditUrls": [],
+    "authorityModel": "The hook, registry, vaults, and order hub are non-upgradeable. One immutable approved adapter can prepare each PoolId once. PoolManager-only initialization activates and freezes that configuration. One immutable product-owned executor can schedule orders and receive only recorded or due funds. It cannot select another recipient. There is no owner or mutable allowlist.",
+    "immutableDependencies": true,
+    "knownRisks": [
+      "This is unaudited source-only code and is not approved for production deployment.",
+      "Exact-output swaps are intentionally unsupported until Hookr publishes a router, quoter, and prefund contract that can gross up the output safely.",
+      "Exact-input buys collect their fee in strategy-token output, so the recorded basket amount is not a native quote budget.",
+      "The immutable approved executor is a trusted custody and off-chain product boundary after bounded funds leave a vault.",
+      "This source does not execute external token trades, buybacks, or liquidity operations and does not define executor routing behavior.",
+      "No native-block composition or Hookr launch ABI compatibility is claimed."
+    ],
+    "frameworkAssessment": {
+      "frameworkUrl": "https://developers.uniswap.org/docs/protocols/v4/security",
+      "assessedAt": null,
+      "scoreStatus": "unscored",
+      "score": null,
+      "featureTriggers": ["custody"],
+      "requiredActions": ["stateful-fuzz", "fork-tests", "monitoring", "bug-bounty", "incident-procedure"],
+      "monitoringStatus": "not-planned",
+      "bugBountyStatus": "not-planned",
+      "incidentResponseStatus": "not-planned"
+    }
+  },
+  "deployments": []
+}
