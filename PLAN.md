@@ -19,12 +19,27 @@ Complete work:
 
 The source is not deployed, audited, approved by Hookr or submitted for listing.
 
+## Hookr V6 compatibility review
+
+The review of `Hookr-fun/hookr-modular-hooks@aa5c93b32c22b2f3cf5742fd2c314822406d428f`
+found that Eco Basket V1 cannot enter the current V6 market-opening path. V6 admits a shared Hookr
+root or another exact deployment of the reviewed Hookr root template. It does not admit a different
+standalone hook, and its coordinator has no call that prepares Eco's registry before pool
+initialization.
+
+The selected integration direction is a typed Eco stateful module so Hookr remains the pool's only
+hook. An external Eco root is out of scope. The Eco-side candidate now implements a typed policy,
+direction-bound stateful claim strategies, and native-quote vault settlement. Hookr still needs to
+agree and implement profile admission, SDK encoding, transaction ordering, and real-root tests. The
+full finding and pinned evidence are in
+[`docs/hookr-v6-compatibility-review.md`](docs/hookr-v6-compatibility-review.md).
+
 ## Phase 1: request Hookr source review
 
 Next actions:
 
 1. Give Hookr the pinned manifest, source commit and test evidence.
-2. Confirm that Eco Basket must remain one standalone external root for the first release.
+2. Agree that Eco Basket will be a typed stateful module under the Hookr root.
 3. Record Hookr review findings and required source changes in this repository.
 4. Do not claim Hookr approval until Hookr gives explicit approval for the pinned source.
 
@@ -41,9 +56,11 @@ Agree these items with Hookr before adding production integration code:
 - exact-output gross-up and prefund settlement
 - final payer, recipient and refund rules
 - deployment, runtime-code and hook-address evidence
-- external-root restrictions and compatibility with Hookr native blocks
+- stateful-module admission, settlement, and compatibility with Hookr native blocks
 
-The current Hookr PR does not publish these interfaces. Do not infer them from internal contracts or create a compatibility layer without a current consumer.
+The reviewed V6 packet publishes contract and ABI evidence for its own admitted modular root, but it
+does not publish an external-root or typed Eco module interface. Do not treat shared-root canary
+evidence as Eco compatibility or create a compatibility layer without an agreed consumer.
 
 Exit condition: Hookr and Eco have one written interface package with exact ABIs, addresses or address-discovery rules, transaction order, failure behavior and test requirements.
 
@@ -87,7 +104,12 @@ Exit condition: the audit, fork tests, execution controls and deployment evidenc
 
 ## Current release blockers
 
-- Hookr has not published the required launch, router, quoter or prefund interfaces.
+- Hookr V6 admits only its reviewed modular root template; Eco V1 is a different standalone hook.
+- The V6 coordinator and SDK do not yet expose Eco preparation or the implemented typed module
+  config.
+- Hookr must register the Eco policy module and admit it in a newly reviewed sealed root profile.
+- Hookr's router/quoter evidence covers its admitted root, not Eco settlement; SDK transaction
+  helpers are also outside the reviewed package surface.
 - Exact-output swaps are rejected in the current source.
 - Exact-input buy fees are collected in the strategy token, not the native quote asset.
 - The repository defines the immutable executor custody boundary but not its external market operations.

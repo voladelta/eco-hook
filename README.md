@@ -59,4 +59,12 @@ node scripts/validate-hookr-manifest.mjs integrations/hookr/manifest.json
 
 The integration vendors only the external-hook V2 schema, semantic validator, and Uniswap policy from Hookr contracts PR 3 head `2b0ee64ed85a2d47037efebb8de144cafa23054e`. It does not include or infer a Hookr launch, router, token, native-block, or executor ABI. The approved executor is an Eco product authority, not a Hookr interface.
 
+The later [Hookr V6 compatibility review](docs/hookr-v6-compatibility-review.md) is pinned separately
+to `Hookr-fun/hookr-modular-hooks@aa5c93b32c22b2f3cf5742fd2c314822406d428f`. It found no supported
+path for selecting Eco's standalone root or configuring Eco as a typed module. Hookr V6 router and
+canary evidence applies to Hookr's admitted modular root and does not establish Eco compatibility.
+The new [typed Eco module candidate](docs/hookr-v6-module-integration.md) implements the Eco-side
+policy, stateful claim strategies, and native-quote vault settlement under that root. A separate
+external root is out of scope. Hookr profile and SDK admission remain outstanding.
+
 This code is unaudited. It is not deployed, approved for production, or submitted for listing.

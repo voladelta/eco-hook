@@ -2,6 +2,12 @@
 
 Hookr remains responsible for token creation, the canonical pool, launch liquidity, and routing. Eco Basket starts at the external-hook boundary.
 
+The Hookr V6 candidate keeps Hookr's modular root as the pool hook. `EcoBasketModuleV1` is a
+read-only typed policy under that root; direction-bound `EcoBasketClaimStrategyV1` contracts own
+stateful native-quote claim accounting and settle only to one `EcoBasketModuleVault`. This candidate
+is separate from the standalone hook described below and still requires Hookr profile and SDK
+admission.
+
 Pool preparation is one transaction before initialization. It validates native/token orientation, one of three fee presets, one to eight unique basket tokens, and a bounded schedule. It creates the isolated vault before any callback. PoolManager initialization activates the prepared record. No later function can change it.
 
 The hook constructor also fixes one product-owned executor address. The registry passes the same address to the order hub and every vault. The address is an explicit trusted custody boundary. It cannot change configuration or redirect a transfer. All authorized releases go only to this address.

@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Reproducible source boundary for the Eco Basket V1 compatibility review; no upstream private source is vendored.",
+  "reviewRepository": "https://github.com/Hookr-fun/hookr-modular-hooks",
+  "reviewCommit": "aa5c93b32c22b2f3cf5742fd2c314822406d428f",
+  "reviewTree": "6d60b479ad3d2da847c0798cce3a54a6f7dc3e84",
+  "sourceManifest": {
+    "path": "SOURCE_MANIFEST.json",
+    "sha256": "5f11e75ccc074a01014d03ced395c2789a4add1af5d938836f274b1a79e99d26",
+    "verifiedFiles": 98,
+    "canonicalRepository": "https://github.com/Hookr-fun/hookr.git",
+    "canonicalCommit": "eab768dc6ba7c1264a86a91ad9817972ccbbcc21"
+  },
+  "requestedArtifacts": [
+    {
+      "path": "docs/uniswap-review/v6/evidence/final-fixes-ui-handoff.json",
+      "sha256": "4c94140dbf4ec22dce4505cc7ab9e50d51c1bf571aa8b5f0e07d1b915bc53a42"
+    },
+    {
+      "path": "packages/v6-sdk/README.md",
+      "sha256": "eb6bfd73abc7e656c937adcf0998621ce996bf408ac0da199b7e1eb958a6bea0"
+    },
+    {
+      "path": "packages/v6-sdk/index.d.ts",
+      "sha256": "863bfb4fde7b1f26e19b205ac340c8f746dd74c3653023725c462b6ef1e88439"
+    },
+    {
+      "path": "packages/v6-sdk/index.mjs",
+      "sha256": "708838373f1fd5bcc3d3a33742adaffe9236c97d5cc11055d3c9d703e5a7aac9"
+    },
+    {
+      "path": "packages/v6-sdk/package.json",
+      "sha256": "e41326d5a24da56aedc79a8eaa95083a805340d265b7313191d44bf638c6c776"
+    },
+    {
+      "path": "packages/v6-sdk/test/abi-parity.mjs",
+      "sha256": "dca9562c964d4142f5d0da11903b02e42542d52ba4389f8737e8fe223c582b88"
+    },
+    {
+      "path": "packages/v6-sdk/test/fixture.mjs",
+      "sha256": "3f5c79836769ddef80c20fb9eef5328fe3ec7ad8f6a0746311b605798e6c93a6"
+    },
+    {
+      "path": "packages/v6-sdk/test/hook-deployment.test.mjs",
+      "sha256": "778a736d7fe8b371fa7ee88083a3d46767bbadbce82f17e2e428400b23a20c27"
+    },
+    {
+      "path": "packages/v6-sdk/test/preactivation-directional-tax.test.mjs",
+      "sha256": "9e2913be72f3f345068a2e0d77e1a3122d59960587f4250fb34745348f7c5acd"
+    },
+    {
+      "path": "packages/v6-sdk/test/sdk.test.mjs",
+      "sha256": "9ebc42dba4ad80e2d01317b4008caf7f95ea22fcc707a83bb2b2fc6fcd88f035"
+    },
+    {
+      "path": "packages/v6-sdk/test/strategy-status.test.mjs",
+      "sha256": "5d7faa637952b5afcf5cd515f35a9be91f5489947477b74b6460967f97d25e98"
+    },
+    {
+      "path": "packages/v6-sdk/test/types.test.ts",
+      "sha256": "b3d580105809ec70d0a91e4b246f258d38d8bc48a23e12b6bb34771f2aea17a4"
+    }
+  ],
+  "relevantCanonicalSources": [
+    {
+      "path": "src/HookrMarketCoordinatorV3.sol",
+      "sha256": "10736d49884e916dc85d5f72ee6b3f5be0e76c66d3eb3292645d3d58207bde1c"
+    },
+    {
+      "path": "src/HookrModuleCatalogV1.sol",
+      "sha256": "61c9a24a42535957dc42ca0d8fad5ecdf26620fb535c3dbff44c1d28cb2b0040"
+    },
+    {
+      "path": "src/HookrStackRegistryV2.sol",
+      "sha256": "266982714fc575ad732a28d5c83038813e546c7866f25b16af83eeb60d74ffa9"
+    },
+    {
+      "path": "src/HookrSwapAccountingKernelV3.sol",
+      "sha256": "44b8aaeb3851c7c5227ee3cf0d244748d6373471a4bba66b52652b7f6aa44c48"
+    }
+  ],
+  "conclusion": {
+    "status": "blocked",
+    "selectedIntegrationMode": "typed-eco-policy-with-stateful-claim-strategies",
+    "externalRootInScope": false,
+    "standaloneRootSupported": false,
+    "ecoModuleCandidateImplemented": true,
+    "typedEcoModuleSupported": false,
+    "routerCompatibilityProven": false,
+    "productionActivationAuthorized": false
+  }
+}
