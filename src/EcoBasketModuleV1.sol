@@ -41,6 +41,7 @@ contract EcoBasketModuleV1 is IHookrModuleV1 {
 
     error InvalidRegistry();
     error InvalidConfig();
+    error ConfigNotPrepared(bytes32 poolId, bytes32 configHash);
     error StrategyNotAttested(address strategy);
     error StrategyCodeChanged(address strategy, bytes32 expected, bytes32 actual);
     error StrategyBindingMismatch(address strategy);
@@ -102,6 +103,8 @@ contract EcoBasketModuleV1 is IHookrModuleV1 {
             poolId == bytes32(0) || kernel == address(0) || kernel.code.length == 0 || subject == address(0)
                 || subject == quote
         ) revert InvalidConfig();
+        bytes32 configHash = keccak256(config);
+        if (strategyRegistry.moduleConfigHash(poolId) != configHash) revert ConfigNotPrepared(poolId, configHash);
         Config memory decoded = _decodeAndValidate(config);
         IPoolManager manager = IHookrKernelPoolManager(kernel).poolManager();
         _validateStrategyBinding(
@@ -129,7 +132,7 @@ contract EcoBasketModuleV1 is IHookrModuleV1 {
 
         (uint16 buyFeeBps, uint16 sellFeeBps) = feesForPreset(decoded.preset);
         uint16 maximum = buyFeeBps > sellFeeBps ? buyFeeBps : sellFeeBps;
-        caps.configHash = keccak256(config);
+        caps.configHash = configHash;
         caps.maxSpecifiedQuoteTakeBps = maximum;
         caps.maxUnspecifiedQuoteTakeBps = maximum;
     }

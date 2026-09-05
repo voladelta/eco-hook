@@ -102,7 +102,7 @@ contract EcoBasketModuleRegistry {
 
         encodedModuleConfig =
             _encodeModuleConfig(preset, prepared.buyStrategy, prepared.sellStrategy, prepared.ecoConfigHash);
-        bytes32 moduleConfigHash = keccak256(encodedModuleConfig);
+        bytes32 configHash = keccak256(encodedModuleConfig);
         _moduleConfigs[poolId] = encodedModuleConfig;
         _poolConfigs[poolId] = PoolConfig({
             prepared: true,
@@ -110,15 +110,10 @@ contract EcoBasketModuleRegistry {
             buyStrategy: prepared.buyStrategy,
             sellStrategy: prepared.sellStrategy,
             ecoConfigHash: prepared.ecoConfigHash,
-            moduleConfigHash: moduleConfigHash
+            moduleConfigHash: configHash
         });
         emit PoolPrepared(
-            poolId,
-            prepared.vault,
-            prepared.buyStrategy,
-            prepared.sellStrategy,
-            prepared.ecoConfigHash,
-            moduleConfigHash
+            poolId, prepared.vault, prepared.buyStrategy, prepared.sellStrategy, prepared.ecoConfigHash, configHash
         );
     }
 
@@ -184,6 +179,10 @@ contract EcoBasketModuleRegistry {
         return _moduleConfigs[poolId];
     }
 
+    function moduleConfigHash(bytes32 poolId) external view returns (bytes32) {
+        return _poolConfigs[PoolId.wrap(poolId)].moduleConfigHash;
+    }
+
     function _encodeModuleConfig(uint8 preset, address buyStrategy, address sellStrategy, bytes32 ecoConfigHash)
         internal
         view
@@ -195,7 +194,7 @@ contract EcoBasketModuleRegistry {
                 buyStrategy: buyStrategy,
                 buyStrategyCodeHash: buyStrategy.codehash,
                 sellStrategy: sellStrategy,
-                sellStrategyCodeHash: sellStrategy.codehash,
+                sellStrategyCodeHash: sellStrategy == address(0) ? bytes32(0) : sellStrategy.codehash,
                 ecoConfigHash: ecoConfigHash
             })
         );

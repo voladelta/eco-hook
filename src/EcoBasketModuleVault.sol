@@ -47,6 +47,10 @@ contract EcoBasketModuleVault {
     mapping(address fundingToken => Allocation allocation) public allocations;
     mapping(address fundingToken => uint256 amount) public scheduledBasket;
 
+    uint8 private buyBasketRemainder;
+    uint8 private buyMarketRemainder;
+    uint8 private sellMarketRemainder;
+
     event SourcesActivated(address indexed buyStrategy, address indexed sellStrategy);
     event FeeAllocated(address indexed fundingToken, bool indexed buy, uint256 amount);
     event BasketOrdersScheduled(address indexed fundingToken, uint256 amount, uint256 startAt);
@@ -107,13 +111,21 @@ contract EcoBasketModuleVault {
 
         Allocation storage allocation = allocations[fundingToken];
         if (buy) {
-            uint256 basketAmount = amount * 80 / 100;
-            uint256 buybackAmount = amount * 10 / 100;
+            // Carry fractions independently of released budgets. Split the non-basket units
+            // equally so no settlement ever allocates more units than it receives.
+            uint256 basketNumerator = amount * 8 + buyBasketRemainder;
+            uint256 basketAmount = basketNumerator / 10;
+            buyBasketRemainder = uint8(basketNumerator % 10);
+            uint256 marketNumerator = amount - basketAmount + buyMarketRemainder;
+            uint256 buybackAmount = marketNumerator / 2;
+            buyMarketRemainder = uint8(marketNumerator % 2);
             allocation.basket += basketAmount;
             allocation.buyback += buybackAmount;
             allocation.liquidity += amount - basketAmount - buybackAmount;
         } else {
-            uint256 buybackAmount = amount * 50 / 100;
+            uint256 marketNumerator = amount + sellMarketRemainder;
+            uint256 buybackAmount = marketNumerator / 2;
+            sellMarketRemainder = uint8(marketNumerator % 2);
             allocation.buyback += buybackAmount;
             allocation.liquidity += amount - buybackAmount;
         }
@@ -150,8 +162,10 @@ contract EcoBasketModuleVault {
 
     function releaseOrderFunds(address fundingToken, uint256 amount) external {
         if (msg.sender != address(orderHub)) revert OnlyOrderHub(msg.sender);
+        // Let the pinned order hub advance dust steps without making a zero-value transfer.
+        if (amount == 0) return;
         uint256 available = scheduledBasket[fundingToken];
-        if (amount == 0 || amount > available) revert InvalidReleaseAmount(amount, available);
+        if (amount > available) revert InvalidReleaseAmount(amount, available);
         scheduledBasket[fundingToken] = available - amount;
         Currency.wrap(fundingToken).transfer(approvedExecutor, amount);
         emit OrderFundsReleased(fundingToken, approvedExecutor, amount);

@@ -13,6 +13,7 @@ import {EcoBasketClaimStrategyV1} from "../../src/EcoBasketClaimStrategyV1.sol";
 import {EcoBasketModuleRegistry} from "../../src/EcoBasketModuleRegistry.sol";
 import {EcoBasketModuleV1} from "../../src/EcoBasketModuleV1.sol";
 import {EcoBasketModuleVault} from "../../src/EcoBasketModuleVault.sol";
+import {NarrativeOrderHub} from "../../src/NarrativeOrderHub.sol";
 import {HookrModuleTypesV1} from "../../src/hookr-v6/HookrModuleTypesV1.sol";
 
 contract ModuleClaimsPoolManagerMock {
@@ -220,6 +221,187 @@ contract EcoBasketModuleTest is Test {
         assertEq(prepared.sellStrategy, address(0));
         assertEq(module.beforeSwap(_swap(false, false), growthConfig).quoteTakeBps, 0);
         assertEq(module.afterSwap(_afterSwap(false, true), growthConfig).quoteTakeBps, 0);
+    }
+
+    function test_growthAdmissionWithFundedZeroAddress() public {
+        vm.deal(address(0), 1);
+        _assertPresetAdmission(module.GROWTH_PRESET(), 100, 0);
+    }
+
+    function test_allPresetsAdmitTheirPreparedConfig() public {
+        _assertPresetAdmission(module.GROWTH_PRESET(), 100, 0);
+        _assertPresetAdmission(module.BALANCED_PRESET(), 75, 25);
+        _assertPresetAdmission(module.NEUTRAL_PRESET(), 50, 50);
+    }
+
+    function test_admissionRejectsChangedPreparedPreset() public {
+        EcoBasketModuleV1.Config memory changed = abi.decode(config, (EcoBasketModuleV1.Config));
+        changed.preset = module.NEUTRAL_PRESET();
+        bytes memory encoded = abi.encode(changed);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                EcoBasketModuleV1.ConfigNotPrepared.selector, PoolId.unwrap(poolId), keccak256(encoded)
+            )
+        );
+        module.validateStack(PoolId.unwrap(poolId), address(kernel), SUBJECT, address(0), encoded);
+    }
+
+    function test_admissionRejectsEveryChangedConfigField() public {
+        for (uint256 word; word < 6; ++word) {
+            bytes memory changed = config;
+            changed[word * 32 + 31] = bytes1(uint8(changed[word * 32 + 31]) ^ 1);
+            vm.expectRevert(
+                abi.encodeWithSelector(
+                    EcoBasketModuleV1.ConfigNotPrepared.selector, PoolId.unwrap(poolId), keccak256(changed)
+                )
+            );
+            module.validateStack(PoolId.unwrap(poolId), address(kernel), SUBJECT, address(0), changed);
+        }
+    }
+
+    function test_admissionRejectsUnpreparedPool() public {
+        bytes32 unpreparedPoolId = keccak256("unprepared");
+        vm.expectRevert(
+            abi.encodeWithSelector(EcoBasketModuleV1.ConfigNotPrepared.selector, unpreparedPoolId, keccak256(config))
+        );
+        module.validateStack(unpreparedPoolId, address(kernel), SUBJECT, address(0), config);
+    }
+
+    function test_oneWeiSettlementsPreserveDirectionalAllocations() public {
+        vm.deal(address(manager), 200);
+        kernel.credit(buyStrategy, 100);
+        kernel.credit(sellStrategy, 100);
+        for (uint256 i; i < 100; ++i) {
+            buyStrategy.settleClaims(1);
+            sellStrategy.settleClaims(1);
+        }
+        (uint256 basket, uint256 buyback, uint256 liquidity) = vault.allocations(address(0));
+        assertEq(basket, 80);
+        assertEq(buyback, 60);
+        assertEq(liquidity, 60);
+        assertEq(address(vault).balance, basket + buyback + liquidity);
+        assertEq(buyStrategy.accountedClaims(), 0);
+        assertEq(sellStrategy.accountedClaims(), 0);
+    }
+
+    function testFuzz_settlementPartitionsSurviveMarketWithdrawals(uint96 buyAmount, uint96 sellAmount, uint256 seed)
+        public
+    {
+        uint256 buyTotal = uint256(buyAmount) + 1;
+        uint256 sellTotal = uint256(sellAmount) + 1;
+        vm.deal(address(manager), buyTotal + sellTotal);
+        kernel.credit(buyStrategy, buyTotal);
+        kernel.credit(sellStrategy, sellTotal);
+        uint256 snapshot = vm.snapshotState();
+        buyStrategy.settleClaims(buyTotal);
+        sellStrategy.settleClaims(sellTotal);
+        (uint256 expectedBasket, uint256 expectedBuyback, uint256 expectedLiquidity) = vault.allocations(address(0));
+        assertTrue(vm.revertToState(snapshot));
+
+        uint256 buyPart = seed % buyTotal + 1;
+        uint256 sellPart = seed % sellTotal + 1;
+        buyStrategy.settleClaims(buyPart);
+        sellStrategy.settleClaims(sellPart);
+        (, uint256 withdrawnBuyback, uint256 withdrawnLiquidity) = vault.allocations(address(0));
+        vm.startPrank(EXECUTOR);
+        if (withdrawnBuyback != 0) {
+            vault.releaseMarketFunds(address(0), EcoBasketModuleVault.MarketAllocation.Buyback, withdrawnBuyback);
+        }
+        if (withdrawnLiquidity != 0) {
+            vault.releaseMarketFunds(address(0), EcoBasketModuleVault.MarketAllocation.Liquidity, withdrawnLiquidity);
+        }
+        vm.stopPrank();
+        if (buyPart < buyTotal) buyStrategy.settleClaims(buyTotal - buyPart);
+        if (sellPart < sellTotal) sellStrategy.settleClaims(sellTotal - sellPart);
+        (uint256 basket, uint256 buyback, uint256 liquidity) = vault.allocations(address(0));
+        assertEq(basket, expectedBasket);
+        assertEq(buyback + withdrawnBuyback, expectedBuyback);
+        assertEq(liquidity + withdrawnLiquidity, expectedLiquidity);
+        assertEq(basket + buyback + liquidity, address(vault).balance);
+        assertEq(address(vault).balance + withdrawnBuyback + withdrawnLiquidity, buyTotal + sellTotal);
+        assertTrue(buyStrategy.accountingInvariant());
+        assertTrue(sellStrategy.accountingInvariant());
+    }
+
+    function test_maximumSettlementBatchConservesFunds() public {
+        uint256 amount = buyStrategy.MAX_WITHDRAWAL_BATCH();
+        vm.deal(address(manager), amount);
+        kernel.credit(buyStrategy, amount);
+        buyStrategy.settleClaims(amount);
+        (uint256 basket, uint256 buyback, uint256 liquidity) = vault.allocations(address(0));
+        assertEq(basket + buyback + liquidity, amount);
+        assertEq(address(vault).balance, amount);
+        assertEq(buyStrategy.accountedClaims(), 0);
+        assertEq(buyStrategy.claimBalance(), 0);
+    }
+
+    function test_dustOrderAdvancesZeroValueStepsAndCompletes() public {
+        (EcoBasketModuleVault dustVault, uint256 orderId) = _scheduleDustOrder();
+        NarrativeOrderHub hub = registry.orderHub();
+        vm.warp(block.timestamp + 32 days);
+        uint256 balanceBefore = EXECUTOR.balance;
+        vm.startPrank(EXECUTOR);
+        for (uint8 i; i < 3; ++i) {
+            assertEq(hub.releaseDue(orderId, 8), 0);
+            (,,,,,,,,, uint8 releasedSteps, NarrativeOrderHub.Status status) = hub.orders(orderId);
+            assertEq(releasedSteps, (i + 1) * 8);
+            assertEq(uint8(status), uint8(NarrativeOrderHub.Status.Active));
+            assertEq(dustVault.scheduledBasket(address(0)), 1);
+        }
+        assertEq(hub.releaseDue(orderId, 8), 1);
+        vm.stopPrank();
+        (,,,,,,,,, uint8 finalSteps, NarrativeOrderHub.Status finalStatus) = hub.orders(orderId);
+        assertEq(finalSteps, 32);
+        assertEq(uint8(finalStatus), uint8(NarrativeOrderHub.Status.Complete));
+        assertEq(dustVault.scheduledBasket(address(0)), 0);
+        assertEq(EXECUTOR.balance - balanceBefore, 1);
+        assertEq(address(dustVault).balance, 1);
+    }
+
+    function test_dustOrderExpiryRestoresBudgetAfterZeroValueSteps() public {
+        (EcoBasketModuleVault dustVault, uint256 orderId) = _scheduleDustOrder();
+        NarrativeOrderHub hub = registry.orderHub();
+        vm.prank(EXECUTOR);
+        assertEq(hub.releaseDue(orderId, 8), 0);
+        vm.warp(block.timestamp + 32 days + 30 days + 1);
+        assertEq(hub.expire(orderId), 1);
+        (uint256 basket,,) = dustVault.allocations(address(0));
+        assertEq(basket, 1);
+        assertEq(dustVault.scheduledBasket(address(0)), 0);
+        assertEq(address(dustVault).balance, 2);
+    }
+
+    function _assertPresetAdmission(uint8 preset, uint16 buyFee, uint16 sellFee) internal {
+        PoolKey memory presetKey = key;
+        presetKey.currency1 = Currency.wrap(address(uint160(0x3000 + preset)));
+        address[] memory basket = new address[](1);
+        basket[0] = BASKET_TOKEN;
+        (PoolId id, bytes memory encoded) = registry.preparePool(presetKey, preset, basket, 1 days, 10);
+        assertEq(module.validateConfig(encoded), keccak256(encoded));
+        HookrModuleTypesV1.ModuleConfigCaps memory caps = module.validateStack(
+            PoolId.unwrap(id), address(kernel), Currency.unwrap(presetKey.currency1), address(0), encoded
+        );
+        assertEq(caps.configHash, keccak256(encoded));
+        assertEq(caps.maxSpecifiedQuoteTakeBps, buyFee);
+        assertEq(caps.maxUnspecifiedQuoteTakeBps, buyFee);
+        assertEq(module.beforeSwap(_swap(true, true), encoded).quoteTakeBps, buyFee);
+        assertEq(module.afterSwap(_afterSwap(false, true), encoded).quoteTakeBps, sellFee);
+    }
+
+    function _scheduleDustOrder() internal returns (EcoBasketModuleVault dustVault, uint256 orderId) {
+        PoolKey memory dustKey = key;
+        dustKey.currency1 = Currency.wrap(address(0x4000));
+        address[] memory basket = new address[](1);
+        basket[0] = BASKET_TOKEN;
+        (PoolId id,) = registry.preparePool(dustKey, module.BALANCED_PRESET(), basket, 1 days, 32);
+        EcoBasketModuleRegistry.PoolConfig memory prepared = registry.poolConfig(id);
+        dustVault = EcoBasketModuleVault(payable(prepared.vault));
+        EcoBasketClaimStrategyV1 strategy = EcoBasketClaimStrategyV1(prepared.buyStrategy);
+        vm.deal(address(manager), 2);
+        kernel.credit(strategy, 2);
+        strategy.settleClaims(2);
+        vm.prank(EXECUTOR);
+        orderId = dustVault.scheduleBasketOrders(address(0));
     }
 
     function _swap(bool isBuy, bool exactInput) internal pure returns (HookrModuleTypesV1.SwapContext memory context) {
