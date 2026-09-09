@@ -28,7 +28,7 @@ run_step "forge format" forge fmt --check
 run_step "forge build and sizes" forge build --sizes
 run_step "forge tests" forge test
 if [ -n "${HOOKR_REVIEW_CHECKOUT:-}" ]; then
-    run_step "Hookr current source review" node scripts/validate-hookr-review.mjs "$HOOKR_REVIEW_CHECKOUT"
+    run_step "Hookr real-contract integration" ./scripts/test-hookr-local.sh
 else
     run_step "Hookr local boundary pins" node scripts/validate-hookr-review.mjs
 fi

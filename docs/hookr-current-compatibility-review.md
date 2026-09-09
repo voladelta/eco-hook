@@ -8,8 +8,9 @@ The local checkout was `../hookr-modular-hooks`. Its source manifest binds 41 So
 canonical Hookr commit `8db7fc940938f811f508ba9cb0c8f2d3f24c9a25`.
 
 Eco remains an unadmitted integration candidate. The standalone root has no supported selection
-path. The typed policy and claim-strategy design retains the current ABI, but a source match does
-not establish composition or settlement through the deployed release.
+path. The typed policy and claim-strategy design retains the current ABI. The subsequent local
+integration suite establishes composition and settlement for its tested configuration on a fresh
+Eco-bearing profile, including a pinned chain fork. It does not admit Eco to the deployed profile.
 
 [`current-review-source.json`](../integrations/hookr/current-review-source.json) records the pin,
 manifest hash, local boundary hashes, and conclusions. The [older V6 review](hookr-v6-compatibility-review.md)
@@ -47,8 +48,9 @@ alone cannot admit Eco into the existing sealed profile or modify existing pools
 
 The launcher must derive the final subject address and dynamic-fee pool key, prepare Eco's registry
 through its immutable approved adapter, then submit the exact returned config in `ModuleSelection`.
-The adapter must be connected to the actual market-opening caller. Preparation and launch require
-defined ordering and retry behavior; they are not wired together by this repository yet.
+The adapter must be connected to the actual market-opening caller. The local launcher prototype
+now demonstrates that binding, atomic preparation/opening, and retry of the same prepared Eco
+commitment. A production launcher and client API still require agreement.
 
 ### Creator and revenue rules
 
@@ -85,9 +87,27 @@ Read upstream `docs/guides/swapping-and-quoting.md`, `docs/concepts/fee-model.md
 - Pin the tested Universal Router address and runtime. Upstream's deployment record lists two
   different candidates, rather than one authoritative tested router for all callers.
 
-No Eco deployment, profile admission, real-root settlement test, target-chain fork run, or on-chain
-verification was performed as part of this source refresh. Upstream canaries remain evidence only
-for the upstream configuration. Production approval and an independent audit remain outstanding.
+The initial source refresh performed no runtime tests. The subsequent integration work adds
+the evidence below. Upstream canaries remain evidence only for the upstream configuration.
+Production approval and an independent audit remain outstanding.
+
+## Local runtime evidence
+
+The [integration suite](../integrations/hookr-local/README.md) has 16 passing local tests, including
+64 seeded fuzz runs. It deploys unmodified Hookr sources, registers Eco alongside mandatory Native
+Mechanics, and seals a new test profile using normal owner calls. It covers all three Eco presets
+and four swap quadrants, quotes, actual claim backing/settlement, native add-on composition,
+new-token prediction and creator buys, rollback, preparation retry, and guard/price-limit rejection.
+
+Three additional fork tests pass at chain-4663 block 58,416,400 against the deployed PoolManager,
+Universal Router, and Permit2. Their runtime hashes and the block identity are pinned in
+[`fork-source.json`](../integrations/hookr-local/fork-source.json). The tests verify Balanced swaps
+in all four quadrants, third-party recipients, native refunds, Eco claim settlement, nonempty
+untrusted hook-data rejection, and the difference in native pot participation between routers.
+
+This is evidence for the prototype's tested configuration and a newly deployed test graph inside
+the fork. It does not modify Hookr's deployed profile or prove an arbitrary production configuration.
+The suite also verifies that an existing sealed native-only profile rejects registered Eco modules.
 
 ## Reproduce the source check
 
@@ -107,5 +127,5 @@ or verify the canonical source repository independently.
 Eco's full `scripts/check.sh` passed with that checkout: formatting, build and sizes, Forge tests,
 the current source check, standalone manifest validation and validator tests, and Slither's
 `--fail-high` gate. Slither still reports findings below that gate; this is not a clean audit.
-The current source checker also rejected an incorrect checkout revision. No Solidity behavior
-changed in this refresh, and those existing tests do not establish settlement through Hookr's root.
+The current source checker also rejected an incorrect checkout revision. The Eco fee contracts
+remain unchanged; the new launcher and integration tests are isolated under `integrations/hookr-local`.

@@ -17,15 +17,30 @@
     "src/hookr-v6/IHookrClaimSinkV1.sol": "062a35215e81f1599253a819ed5cfee8ba46017d2c40ed3d7d3942369cb90829",
     "src/hookr-v6/HookrModuleTypesV1.sol": "ad976013dd8e4b10464ed8b50ab040e93964185db14f2c14286f21bea8390880"
   },
+  "runtimeEvidence": {
+    "suite": "../hookr-local",
+    "compiler": "0.8.26",
+    "viaIR": true,
+    "optimizerRuns": 200,
+    "v4CoreCommit": "46c6834698c48bc4a463a86d8420f4eb1d7f3b75",
+    "forgeStdCommit": "c179529c064588ede54a0661ec3cc98219460d07",
+    "localTests": 16,
+    "fuzzRuns": 64,
+    "fuzzSeed": "0xec0",
+    "forkTests": 3,
+    "forkSource": "../hookr-local/fork-source.json",
+    "scope": "Fresh test profile admitting Eco and Native Mechanics; no production deployment or admission."
+  },
   "conclusion": {
-    "status": "candidate-requires-integration",
+    "status": "locally-integrated-candidate-awaiting-admission",
     "standaloneRootSupported": false,
     "ecoModuleAdmitted": false,
     "policyAndClaimAbiMatch": true,
     "accountingKernelUnchangedSincePreviousReview": true,
     "nativeMechanicsRequired": true,
     "bundledSdkPresent": false,
-    "realRootEcoSettlementTested": false,
+    "realRootEcoSettlementTested": true,
+    "forkSimulationVerified": true,
     "productionActivationAuthorized": false
   }
 }

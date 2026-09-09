@@ -129,22 +129,30 @@ unreleased budget. Both manifest-pinned `NarrativeOrderHub.sol` and `EcoVault.so
 
 ## Remaining Hookr work
 
-This repository now provides the Eco-side candidate, not a production admission:
+This repository provides the Eco candidate and local integration evidence. Production admission
+remains outstanding.
+
+The [local integration suite](../integrations/hookr-local/README.md) supplies a single-operator
+launcher prototype and tests through the actual root, catalog, StackRegistry, coordinator,
+Native Mechanics, router/quoter, treasury forwarder, and PoolManager. A pinned chain-4663 fork also
+tests the deployed Universal Router and Permit2. The test profile admits both modules through the
+normal owner functions; no deployed Hookr profile is changed.
 
 - Hookr must register the module and include it in a newly reviewed sealed profile on a new Hookr
   root address. The existing sealed profile cannot be expanded by catalog registration alone.
 - The old bundled V6 SDK has been removed. A current client needs an agreed typed Eco
   config/preparation builder and transaction ordering against the V5 coordinator.
-- The approved adapter must be bound to Hookr's market-opening authority.
+- The prototype binds its Eco adapter and Hookr creator to the same launcher. A production
+  launcher, user authorization model, and client interface still require agreement.
 - Native Mechanics V2 is mandatory. Its config must match the launcher's current creator share
   tier and the module's immutable treasury. The old partner directional-revenue restriction is
   historical. The native protocol share does not automatically apply to Eco claims; Eco revenue
   terms and aggregate fee behavior still need review.
-- Tests must run through the real Hookr root, StackRegistry, coordinator, router, quoter, and
-  PoolManager rather than the local claim-settlement mock.
+- Extend the real-contract tests to the approved production configuration envelope, including
+  liquidity exhaustion, tick crossing, and any supported multi-hop routes.
 - Exact-output behavior remains conditional on Hookr's router, launch-guard, and aggregate fee rules.
-- Deployment hashes, target-chain fork evidence, gas limits, audit, and explicit Hookr approval are
-  still required.
+- The fork evidence covers a fresh local Eco-bearing graph, not an admitted production deployment.
+  Production deployment hashes, reviewed gas limits, audit, and explicit Hookr approval remain required.
 
 The registry, module, and vault are immutable deployments. These source fixes require newly
 deployed contracts and fresh prepared configs; they do not repair previously prepared instances.

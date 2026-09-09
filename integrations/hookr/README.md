@@ -9,7 +9,10 @@ The current modular release assessment is pinned in `current-review-source.json`
 `v6-review-source.json` preserves the earlier historical review. Neither replaces this standalone
 manifest's schema or source pin. The latest coordinator requires Native Mechanics V2 under an
 admitted Hookr root. Eco's typed read-only policy and stateful claim strategies remain a candidate
-for a new profile, with preparation, client integration, and combined settlement tests outstanding.
+for a new production profile.
+The [local integration suite](../hookr-local/README.md) now demonstrates preparation and combined
+settlement through a new test profile, plus a pinned Universal Router fork. Production client
+integration and admission remain outstanding.
 
 Run `node scripts/validate-hookr-review.mjs ../hookr-modular-hooks` from the Eco repository root
 to check the current checkout, all 41 upstream manifest sources, and Eco's reviewed interface files.

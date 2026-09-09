@@ -30,8 +30,10 @@ is historical; its bundled SDK and handoff packet have been removed upstream.
 The selected integration direction is a typed Eco policy so Hookr remains the pool's only
 hook. An external Eco root is out of scope. The Eco-side candidate now implements a typed policy,
 direction-bound stateful claim strategies, and native-quote vault settlement. Hookr still needs to
-agree and implement profile admission, current client encoding, transaction ordering, and real-root
-tests with mandatory Native Mechanics. The full finding and pinned evidence are in
+agree production profile admission, current client encoding, and launcher authority. The
+[local integration suite](integrations/hookr-local/README.md) now tests atomic preparation/opening,
+real-root settlement with Native Mechanics, and a pinned Universal Router fork. The full finding
+and pinned evidence are in
 [`docs/hookr-current-compatibility-review.md`](docs/hookr-current-compatibility-review.md).
 
 ## Phase 1: request Hookr source review
@@ -106,13 +108,15 @@ Exit condition: the audit, fork tests, execution controls and deployment evidenc
 ## Current release blockers
 
 - Hookr admits sealed shared roots; Eco V1 is a different standalone hook.
-- The V5 coordinator has no Eco preparation step, and the old bundled SDK has been removed.
+- The local launcher supplies Eco preparation before V5 opening. A production launcher/client
+  contract remains unapproved, and the old bundled SDK has been removed.
 - Hookr must register the Eco policy module and admit it in a newly reviewed sealed root profile.
 - Native Mechanics V2 must remain selected and satisfy creator-tier and treasury admission rules.
-- Hookr's router/quoter evidence covers its admitted configuration, not Eco settlement.
+- Eco has local and pinned-fork router/settlement evidence for the tested profile; a production
+  configuration, gas envelope, and deployment still require review.
 - The standalone hook rejects exact-output swaps and collects buy fees in the strategy token.
   The module candidate supports all four policy quadrants in native quote, subject to Hookr's guard,
-  aggregate fees, and real-root settlement verification.
+  aggregate fees, and the tested configuration limits.
 - The repository defines the immutable executor custody boundary but not its external market operations.
 - The contracts are unaudited and have no production deployment or Hookr approval.
 

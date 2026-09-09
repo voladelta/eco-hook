@@ -67,12 +67,14 @@ former bundled V6 SDK and handoff package have been removed.
 
 Eco's standalone root remains unsupported, and the deployed profile does not admit Eco. The
 [typed Eco module candidate](docs/hookr-v6-module-integration.md) retains matching policy and claim
-interfaces, stateful claim strategies, and native-quote vault settlement. It still requires a new
-Eco-admitting profile, composition testing with mandatory Native Mechanics, preparation and client
-integration, and real-root router/settlement tests. Hookr's deployment and canary evidence does not
-establish Eco compatibility. A separate external root remains out of scope.
+interfaces, stateful claim strategies, and native-quote vault settlement. The
+[local integration suite](integrations/hookr-local/README.md) now tests a fresh Eco-bearing profile
+through the real Hookr contracts, including Native Mechanics composition, atomic preparation and
+launch, and claim settlement. Pinned fork tests also exercise the deployed PoolManager and Universal
+Router. Production admission, launcher/client agreement, deployment parameters, and audit remain
+outstanding. A separate external root remains out of scope.
 
-Verify the current source pin against a local Hookr checkout:
+Verify the current source pin and run the local integration suite against a Hookr checkout:
 
 ```sh
 HOOKR_REVIEW_CHECKOUT=../hookr-modular-hooks ./scripts/check.sh
@@ -80,5 +82,7 @@ HOOKR_REVIEW_CHECKOUT=../hookr-modular-hooks ./scripts/check.sh
 
 Without that variable, the checks verify the local interface pins only. The `src/hookr-v6/` path
 remains the name of the existing ABI boundary; it does not imply use of the removed V6 SDK.
+
+Fork tests require `HOOKR_FORK_RPC_URL`; see the integration guide for the pinned block and command.
 
 This code is unaudited. It is not deployed, approved for production, or submitted for listing.

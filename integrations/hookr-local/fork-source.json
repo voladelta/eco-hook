@@ -1,0 +1,15 @@
+{
+  "chainId": 4663,
+  "blockNumber": 58416400,
+  "blockHash": "0xaa63dc159daeb9dbb1d66b4f1ed808419afbca6b6b23169f54bba1f19903722c",
+  "parentBlockHash": "0x5a8c4d0ea62fa291697112b8854b462dfd925c0b41ee93db4214846f383c99f7",
+  "rpcDocumentation": "https://docs.robinhood.com/chain/connecting/",
+  "poolManager": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+  "poolManagerCodeHash": "0xbd3881180b547f5fe817545743cfb4343e96b1bc6640dcd70c106b0066e95626",
+  "universalRouter": "0x8876789976dEcBfCbBbe364623C63652db8C0904",
+  "universalRouterCodeHash": "0x2ce6aaaf9f4151f5e1cbf774668772f17f532ae11b15e9284fd0a072a8b0fbde",
+  "universalRouterSources": "https://sourcify.dev/server/v2/contract/4663/0x8876789976dEcBfCbBbe364623C63652db8C0904?fields=sources",
+  "permit2": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+  "permit2CodeHash": "0x5208783f52488f7d3493e5e38311ab707c1d75457fe472a19b0b4d57d66a7fca",
+  "scope": "Local EVM fork only. A new test Hookr graph admits Eco; the deployed Hookr profile is not changed."
+}
