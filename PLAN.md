@@ -19,27 +19,27 @@ Complete work:
 
 The source is not deployed, audited, approved by Hookr or submitted for listing.
 
-## Hookr V6 compatibility review
+## Current Hookr compatibility assessment
 
-The review of `Hookr-fun/hookr-modular-hooks@aa5c93b32c22b2f3cf5742fd2c314822406d428f`
-found that Eco Basket V1 cannot enter the current V6 market-opening path. V6 admits a shared Hookr
-root or another exact deployment of the reviewed Hookr root template. It does not admit a different
-standalone hook, and its coordinator has no call that prepares Eco's registry before pool
-initialization.
+The current assessment is pinned to
+`Hookr-fun/hookr-modular-hooks@486a8e62767977c06bb82db43e73e816e0545038`. The release uses a
+V6 shared root, V5 coordinator, and mandatory Native Mechanics V2. It does not admit Eco's
+standalone hook or include Eco in the deployed sealed profile. The earlier review at `aa5c93b...`
+is historical; its bundled SDK and handoff packet have been removed upstream.
 
-The selected integration direction is a typed Eco stateful module so Hookr remains the pool's only
+The selected integration direction is a typed Eco policy so Hookr remains the pool's only
 hook. An external Eco root is out of scope. The Eco-side candidate now implements a typed policy,
 direction-bound stateful claim strategies, and native-quote vault settlement. Hookr still needs to
-agree and implement profile admission, SDK encoding, transaction ordering, and real-root tests. The
-full finding and pinned evidence are in
-[`docs/hookr-v6-compatibility-review.md`](docs/hookr-v6-compatibility-review.md).
+agree and implement profile admission, current client encoding, transaction ordering, and real-root
+tests with mandatory Native Mechanics. The full finding and pinned evidence are in
+[`docs/hookr-current-compatibility-review.md`](docs/hookr-current-compatibility-review.md).
 
 ## Phase 1: request Hookr source review
 
 Next actions:
 
 1. Give Hookr the pinned manifest, source commit and test evidence.
-2. Agree that Eco Basket will be a typed stateful module under the Hookr root.
+2. Agree Eco's read-only policy and stateful claim strategies alongside mandatory Native Mechanics.
 3. Record Hookr review findings and required source changes in this repository.
 4. Do not claim Hookr approval until Hookr gives explicit approval for the pinned source.
 
@@ -49,8 +49,8 @@ Exit condition: Hookr accepts the source-review package or gives a fixed list of
 
 Agree these items with Hookr before adding production integration code:
 
-- instant-launch adapter call and authority
-- auction-migration adapter call, cancellation and expiry
+- new-token and existing-asset launcher calls and adapter authority
+- failed or abandoned preparation and launch retry behavior
 - canonical pool identity and activation order
 - approved router and quoter behavior
 - exact-output gross-up and prefund settlement
@@ -58,9 +58,10 @@ Agree these items with Hookr before adding production integration code:
 - deployment, runtime-code and hook-address evidence
 - stateful-module admission, settlement, and compatibility with Hookr native blocks
 
-The reviewed V6 packet publishes contract and ABI evidence for its own admitted modular root, but it
-does not publish an external-root or typed Eco module interface. Do not treat shared-root canary
-evidence as Eco compatibility or create a compatibility layer without an agreed consumer.
+The current release publishes contracts and integration guides for its own admitted modular root.
+Its policy ABI matches Eco's candidate, but no Eco profile or client preparation path is supplied.
+Do not treat shared-root canary evidence as Eco compatibility. Creator-tier revenue, native guard
+behavior, combined fee caps, and router-specific settlement require current-release tests.
 
 Exit condition: Hookr and Eco have one written interface package with exact ABIs, addresses or address-discovery rules, transaction order, failure behavior and test requirements.
 
@@ -69,8 +70,8 @@ Exit condition: Hookr and Eco have one written interface package with exact ABIs
 After Phase 2 is complete:
 
 1. Implement the narrow Hookr adapter against the agreed interface.
-2. Test instant launch as one atomic prepare, initialize and activate operation.
-3. Test auction migration, failed auction cancellation and expired preparation cleanup.
+2. Test new-token launch as one atomic prepare, initialize and activate operation where supported.
+3. Test existing-asset opening, failed launch rollback, and retry of a previously prepared pool.
 4. Add the approved router and quoter policy.
 5. Implement and test quote-funded buys and both exact-output directions if the agreed settlement model supports them.
 6. Keep unsupported swap modes rejected until their full settlement path passes.
@@ -100,18 +101,18 @@ Exit condition: the audit, fork tests, execution controls and deployment evidenc
 3. Run `HOOKRECO` as a production canary with strict spending limits.
 4. Review canary accounting, execution quality, volume and operational events.
 5. Open the reviewed hook to other Hookr creators only after the canary review passes.
-6. Add Eco Basket as a typed Hookr block later if the compiler publishes a compatible interface.
+6. Expand adoption only within the reviewed Eco-bearing profile and tested configuration limits.
 
 ## Current release blockers
 
-- Hookr V6 admits only its reviewed modular root template; Eco V1 is a different standalone hook.
-- The V6 coordinator and SDK do not yet expose Eco preparation or the implemented typed module
-  config.
+- Hookr admits sealed shared roots; Eco V1 is a different standalone hook.
+- The V5 coordinator has no Eco preparation step, and the old bundled SDK has been removed.
 - Hookr must register the Eco policy module and admit it in a newly reviewed sealed root profile.
-- Hookr's router/quoter evidence covers its admitted root, not Eco settlement; SDK transaction
-  helpers are also outside the reviewed package surface.
-- Exact-output swaps are rejected in the current source.
-- Exact-input buy fees are collected in the strategy token, not the native quote asset.
+- Native Mechanics V2 must remain selected and satisfy creator-tier and treasury admission rules.
+- Hookr's router/quoter evidence covers its admitted configuration, not Eco settlement.
+- The standalone hook rejects exact-output swaps and collects buy fees in the strategy token.
+  The module candidate supports all four policy quadrants in native quote, subject to Hookr's guard,
+  aggregate fees, and real-root settlement verification.
 - The repository defines the immutable executor custody boundary but not its external market operations.
 - The contracts are unaudited and have no production deployment or Hookr approval.
 

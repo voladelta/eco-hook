@@ -27,6 +27,11 @@ run_step() {
 run_step "forge format" forge fmt --check
 run_step "forge build and sizes" forge build --sizes
 run_step "forge tests" forge test
+if [ -n "${HOOKR_REVIEW_CHECKOUT:-}" ]; then
+    run_step "Hookr current source review" node scripts/validate-hookr-review.mjs "$HOOKR_REVIEW_CHECKOUT"
+else
+    run_step "Hookr local boundary pins" node scripts/validate-hookr-review.mjs
+fi
 hookr_manifest=integrations/hookr/manifest.json
 if [ -f "$hookr_manifest" ]; then
     run_step "Hookr manifest source validation" node scripts/validate-hookr-manifest.mjs "$hookr_manifest"

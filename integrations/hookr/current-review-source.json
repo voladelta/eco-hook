@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Current Hookr source assessment; not module admission or deployment authorization.",
+  "reviewRepository": "https://github.com/Hookr-fun/hookr-modular-hooks",
+  "reviewCommit": "486a8e62767977c06bb82db43e73e816e0545038",
+  "reviewTree": "3b5dd50e0612eb459fe58df5ed84a2f719431e13",
+  "reviewDate": "2026-09-09",
+  "previousReview": "v6-review-source.json",
+  "sourceManifest": {
+    "path": "SOURCE_MANIFEST.json",
+    "sha256": "58144ed587e2a1ca6a92e2e3dc393e75ca1aa75ee3173d8234de7ac51f9fab57",
+    "verifiedFiles": 41,
+    "canonicalCommit": "8db7fc940938f811f508ba9cb0c8f2d3f24c9a25"
+  },
+  "localBoundaryFiles": {
+    "src/hookr-v6/IHookrModuleV1.sol": "425cbdfb39559ccb94ea39eb6d96d310991ff6c491165afb9dbda01094e83967",
+    "src/hookr-v6/IHookrClaimSinkV1.sol": "062a35215e81f1599253a819ed5cfee8ba46017d2c40ed3d7d3942369cb90829",
+    "src/hookr-v6/HookrModuleTypesV1.sol": "ad976013dd8e4b10464ed8b50ab040e93964185db14f2c14286f21bea8390880"
+  },
+  "conclusion": {
+    "status": "candidate-requires-integration",
+    "standaloneRootSupported": false,
+    "ecoModuleAdmitted": false,
+    "policyAndClaimAbiMatch": true,
+    "accountingKernelUnchangedSincePreviousReview": true,
+    "nativeMechanicsRequired": true,
+    "bundledSdkPresent": false,
+    "realRootEcoSettlementTested": false,
+    "productionActivationAuthorized": false
+  }
+}

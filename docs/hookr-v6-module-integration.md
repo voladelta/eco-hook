@@ -1,5 +1,10 @@
 # Hookr V6 typed Eco module
 
+Current baseline: `Hookr-fun/hookr-modular-hooks@486a8e62767977c06bb82db43e73e816e0545038`.
+See the [current compatibility assessment](hookr-current-compatibility-review.md) and
+[`current-review-source.json`](../integrations/hookr/current-review-source.json). The filename
+retains the candidate's original name; the removed V6 SDK is not a current dependency.
+
 ## Implemented shape
 
 Eco's V6 candidate uses Hookr's supported read-only policy lane with stateful, direction-bound claim
@@ -15,9 +20,10 @@ Hookr modular root
   -> basket / buyback / liquidity accounting
 ```
 
-The module itself is read-only because the pinned Hookr V6 catalog reserves `STATEFUL_V1` for Native
-Mechanics. Eco's state lives in the claim strategies and vault. This is the same separation used by
-Hookr's directional-tax policy and strategy boundary.
+The module itself is read-only because the current Hookr catalog reserves `STATEFUL_V1` for its
+canonical Native Mechanics module. Eco's state lives in the claim strategies and vault. The policy,
+claim-sink ABI, and accounting kernel are unchanged from the older review. Native Mechanics V2 is
+now mandatory in the V5 coordinator, so a future Eco stack must include it as well.
 
 ## Contracts
 
@@ -47,8 +53,10 @@ buy-fee limitation.
 | Exact-output sell | `beforeSwap` specified quote | preset sell fee |
 
 The presets remain Growth 1.00%/0.00%, Balanced 0.75%/0.25%, and Neutral 0.50%/0.50%. The module
-shares Hookr's `DIRECTIONAL_QUOTE_TAX` exclusive group, so a pool cannot select both Eco and Hookr's
-separate directional-tax block.
+retains the `DIRECTIONAL_QUOTE_TAX` exclusive group to prevent composition with a policy registered
+in that group. The current deployed release does not include the earlier directional-tax block.
+These are Eco fees only; the total also depends on Native Mechanics and LP fees. Exact-output buys
+are blocked during the native launch guard, even though Eco implements that policy quadrant.
 
 The module vault carries allocation fractions between settlements, separately for buys and sells.
 Buy allocations assign 80% to the basket, then split the remaining units equally between buyback
@@ -68,8 +76,8 @@ The integration sequence is:
 
 1. Deploy `EcoBasketModuleRegistry(approvedAdapter, approvedExecutor)`. It deploys the singleton
    `EcoBasketModuleV1` and one shared `NarrativeOrderHub`.
-2. Hookr reviews and registers that exact module runtime as `READ_ONLY`, then admits it in a new
-   sealed root profile.
+2. Hookr reviews and registers that exact module runtime as `READ_ONLY`, then admits it alongside
+   mandatory Native Mechanics V2 in a new sealed root profile.
 3. The approved adapter constructs the final native-quote `PoolKey` using the admitted Hookr kernel
    and dynamic-fee flag.
 4. The adapter calls `preparePool`. The registry deploys one vault, a buy strategy, and—unless Growth
@@ -125,11 +133,13 @@ This repository now provides the Eco-side candidate, not a production admission:
 
 - Hookr must register the module and include it in a newly reviewed sealed profile on a new Hookr
   root address. The existing sealed profile cannot be expanded by catalog registration alone.
-- The V6 SDK needs a typed Eco config/preparation builder and transaction ordering.
+- The old bundled V6 SDK has been removed. A current client needs an agreed typed Eco
+  config/preparation builder and transaction ordering against the V5 coordinator.
 - The approved adapter must be bound to Hookr's market-opening authority.
-- Hookr's current nonzero partner directional-revenue terms require its directional-tax module.
-  Eco shares that module's exclusive group, so including both is not a solution. The Eco workflow
-  needs reviewed zero-directional-revenue terms or explicit Hookr-side Eco revenue support.
+- Native Mechanics V2 is mandatory. Its config must match the launcher's current creator share
+  tier and the module's immutable treasury. The old partner directional-revenue restriction is
+  historical. The native protocol share does not automatically apply to Eco claims; Eco revenue
+  terms and aggregate fee behavior still need review.
 - Tests must run through the real Hookr root, StackRegistry, coordinator, router, quoter, and
   PoolManager rather than the local claim-settlement mock.
 - Exact-output behavior remains conditional on Hookr's router, launch-guard, and aggregate fee rules.

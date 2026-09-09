@@ -59,12 +59,26 @@ node scripts/validate-hookr-manifest.mjs integrations/hookr/manifest.json
 
 The integration vendors only the external-hook V2 schema, semantic validator, and Uniswap policy from Hookr contracts PR 3 head `2b0ee64ed85a2d47037efebb8de144cafa23054e`. It does not include or infer a Hookr launch, router, token, native-block, or executor ABI. The approved executor is an Eco product authority, not a Hookr interface.
 
-The later [Hookr V6 compatibility review](docs/hookr-v6-compatibility-review.md) is pinned separately
-to `Hookr-fun/hookr-modular-hooks@aa5c93b32c22b2f3cf5742fd2c314822406d428f`. It found no supported
-path for selecting Eco's standalone root or configuring Eco as a typed module. Hookr V6 router and
-canary evidence applies to Hookr's admitted modular root and does not establish Eco compatibility.
-The new [typed Eco module candidate](docs/hookr-v6-module-integration.md) implements the Eco-side
-policy, stateful claim strategies, and native-quote vault settlement under that root. A separate
-external root is out of scope. Hookr profile and SDK admission remain outstanding.
+The [current Hookr assessment](docs/hookr-current-compatibility-review.md) is pinned separately to
+`Hookr-fun/hookr-modular-hooks@486a8e62767977c06bb82db43e73e816e0545038`. It supersedes the
+[historical V6 review](docs/hookr-v6-compatibility-review.md) as the integration baseline. Hookr now
+publishes its deployed `HookrModularHookV6`, V5 coordinator, and Native Mechanics V2 release. The
+former bundled V6 SDK and handoff package have been removed.
+
+Eco's standalone root remains unsupported, and the deployed profile does not admit Eco. The
+[typed Eco module candidate](docs/hookr-v6-module-integration.md) retains matching policy and claim
+interfaces, stateful claim strategies, and native-quote vault settlement. It still requires a new
+Eco-admitting profile, composition testing with mandatory Native Mechanics, preparation and client
+integration, and real-root router/settlement tests. Hookr's deployment and canary evidence does not
+establish Eco compatibility. A separate external root remains out of scope.
+
+Verify the current source pin against a local Hookr checkout:
+
+```sh
+HOOKR_REVIEW_CHECKOUT=../hookr-modular-hooks ./scripts/check.sh
+```
+
+Without that variable, the checks verify the local interface pins only. The `src/hookr-v6/` path
+remains the name of the existing ABI boundary; it does not imply use of the removed V6 SDK.
 
 This code is unaudited. It is not deployed, approved for production, or submitted for listing.

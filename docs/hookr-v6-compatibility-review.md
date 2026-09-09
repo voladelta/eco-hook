@@ -1,5 +1,9 @@
 # Hookr V6 compatibility review
 
+> Historical review at `aa5c93b32c22b2f3cf5742fd2c314822406d428f`. References below to
+> "current", the V6 SDK, partner terms, and root deployment modes describe that snapshot only.
+> Use the [current assessment](hookr-current-compatibility-review.md) for integration decisions.
+
 ## Result
 
 The deployed Eco Basket V1 standalone hook is **not compatible** with the Hookr V6 market-opening path reviewed at
