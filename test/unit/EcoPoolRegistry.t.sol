@@ -193,6 +193,35 @@ contract EcoPoolRegistryTest is Test {
         assertEq(uint8(status), uint8(NarrativeOrderHub.Status.Complete));
     }
 
+    function test_dustOrderStepsAdvanceAndReleaseFinalRemainder() public {
+        EcoVault vault = _prepare();
+        vault.recordFee(address(fundingToken), 3, true);
+        fundingToken.mint(address(vault), 3);
+        uint256 firstOrderId = vault.scheduleBasketOrders(address(fundingToken));
+        NarrativeOrderHub hub = registry.orderHub();
+        uint256 startAt = block.timestamp;
+
+        for (uint8 step = 1; step <= 7; ++step) {
+            vm.warp(startAt + uint256(step - 1) * 1 days);
+            for (uint256 orderId = firstOrderId; orderId < firstOrderId + 2; ++orderId) {
+                assertEq(hub.releaseDue(orderId, 1), step == 7 ? 1 : 0);
+                (,,,,, uint128 released,,,, uint8 releasedSteps, NarrativeOrderHub.Status status) = hub.orders(orderId);
+                assertEq(releasedSteps, step);
+                assertEq(released, step == 7 ? 1 : 0);
+                assertEq(
+                    uint8(status),
+                    uint8(step == 7 ? NarrativeOrderHub.Status.Complete : NarrativeOrderHub.Status.Active)
+                );
+            }
+            assertEq(vault.scheduledBasket(address(fundingToken)), step == 7 ? 0 : 2);
+            assertEq(fundingToken.balanceOf(address(this)), step == 7 ? 2 : 0);
+            assertEq(fundingToken.balanceOf(address(vault)), step == 7 ? 1 : 3);
+        }
+
+        vm.expectRevert(abi.encodeWithSelector(EcoVault.OnlyOrderHub.selector, address(this)));
+        vault.releaseOrderFunds(address(fundingToken), 0);
+    }
+
     function test_nativeOrderReleaseTransfersOnlyDueFunding() public {
         EcoVault vault = _prepare();
         vault.recordFee(address(0), 101, true);

@@ -124,8 +124,10 @@ contract EcoVault {
     /// @notice Called after the order hub advances due accounting.
     function releaseOrderFunds(address fundingToken, uint256 amount) external {
         if (msg.sender != address(orderHub)) revert OnlyOrderHub(msg.sender);
+        // Let the order hub advance dust steps without making a zero-value transfer.
+        if (amount == 0) return;
         uint256 available = scheduledBasket[fundingToken];
-        if (amount == 0 || amount > available) revert InvalidReleaseAmount(amount, available);
+        if (amount > available) revert InvalidReleaseAmount(amount, available);
         scheduledBasket[fundingToken] = available - amount;
         Currency.wrap(fundingToken).transfer(approvedExecutor, amount);
         emit OrderFundsReleased(fundingToken, approvedExecutor, amount);
