@@ -176,7 +176,7 @@ library EasyPosm {
         (Currency currency0, Currency currency1) = getCurrencies(posm, tokenId);
 
         bytes[] memory params = new bytes[](2);
-        params[0] = abi.encode(tokenId, 0, amount0Min, amount1Min, hookData);
+        params[0] = abi.encode(tokenId, amount0Min, amount1Min, hookData);
         params[1] = abi.encode(currency0, currency1, recipient);
 
         uint256 balance0Before = currency0.balanceOf(recipient);

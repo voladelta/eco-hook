@@ -55,9 +55,11 @@ contract EcoHookrForkTest is HookrLocalFixture {
 
     function _createManager() internal override returns (PoolManager) {
         string memory pin = vm.readFile(string.concat(vm.projectRoot(), "/fork-source.json"));
-        vm.createSelectFork(vm.envString("HOOKR_FORK_RPC_URL"), pin.readUint(".blockNumber"));
+        uint256 pinnedBlock = pin.readUint(".blockNumber");
+        vm.createSelectFork(vm.envString("HOOKR_FORK_RPC_URL"), pinnedBlock);
         assertEq(vm.getChainId(), pin.readUint(".chainId"));
         assertEq(block.number, pin.readUint(".blockNumber"));
+        assertEq(keccak256(vm.getRawBlockHeader(pinnedBlock)), pin.readBytes32(".blockHash"));
         assertEq(blockhash(block.number - 1), pin.readBytes32(".parentBlockHash"));
         address deployedManager = pin.readAddress(".poolManager");
         address deployedRouter = pin.readAddress(".universalRouter");

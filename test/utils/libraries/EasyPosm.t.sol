@@ -12,6 +12,7 @@ import {CurrencyLibrary, Currency} from "@uniswap/v4-core/src/types/Currency.sol
 import {StateLibrary} from "@uniswap/v4-core/src/libraries/StateLibrary.sol";
 import {LiquidityAmounts} from "@uniswap/v4-core/test/utils/LiquidityAmounts.sol";
 import {IPositionManager} from "@uniswap/v4-periphery/src/interfaces/IPositionManager.sol";
+import {Actions} from "@uniswap/v4-periphery/src/libraries/Actions.sol";
 import {Constants} from "@uniswap/v4-core/test/utils/Constants.sol";
 
 import {EasyPosm} from "./EasyPosm.sol";
@@ -214,8 +215,18 @@ contract EasyPosmTest is Test, BaseTest {
             Constants.ZERO_BYTES
         );
 
-        BalanceDelta delta =
-            positionManager.burn(tokenId, 0, 0, address(this), block.timestamp + 1, Constants.ZERO_BYTES);
+        bytes memory hookData = hex"1234567890abcdef";
+        bytes[] memory params = new bytes[](2);
+        params[0] = abi.encode(tokenId, uint128(1e18), uint128(2e18), hookData);
+        params[1] = abi.encode(currency0, currency1, address(this));
+        bytes memory unlockData =
+            abi.encode(abi.encodePacked(uint8(Actions.BURN_POSITION), uint8(Actions.TAKE_PAIR)), params);
+        vm.expectCall(
+            address(positionManager),
+            abi.encodeCall(IPositionManager.modifyLiquidities, (unlockData, block.timestamp + 1))
+        );
+
+        BalanceDelta delta = positionManager.burn(tokenId, 1e18, 2e18, address(this), block.timestamp + 1, hookData);
         assertEq(delta.amount0(), -mintDelta.amount0() - 1 wei);
         assertEq(delta.amount1(), -mintDelta.amount1() - 1 wei);
     }

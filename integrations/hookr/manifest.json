@@ -9,7 +9,7 @@
   "author": { "github": "voladelta" },
   "source": {
     "repository": "https://github.com/voladelta/eco-hook",
-    "pinnedCommit": "a5f9ebd3da28911bc8d99194126869cab38eca64",
+    "pinnedCommit": "b8a7301f60bcd2837a92471ed68d6c94887a1f52",
     "license": "MIT",
     "hookContract": "src/EcoBasketHook.sol",
     "contracts": ["src/EcoBasketHook.sol", "src/EcoPoolRegistry.sol", "src/EcoVault.sol", "src/NarrativeOrderHub.sol"]

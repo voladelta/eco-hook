@@ -68,16 +68,43 @@ contract EcoHookrSwapMatrixTest is HookrLocalFixture {
         cfg.royaltyBps = 500;
         cfg.royaltyTo = address(0xC0FFEE);
         EcoPool memory pool = _openExisting(1, cfg);
+        assertEq(coordinator.protocolShareBps(address(launcher)), 2_000);
 
-        _quoteAndSwap(pool, true, true, 1 ether, hex"");
+        _assertNativeBuyRecipients(pool, cfg.royaltyTo);
+        this.quoteAndSwap(pool, false, true, 0.5 ether, hex"");
+        this.quoteAndSwap(pool, true, false, 0.5 ether, hex"");
+        this.quoteAndSwap(pool, false, false, 0.5 ether, hex"");
+
+        _settleNativeAndEcoRecipients(pool, cfg.royaltyTo);
+    }
+
+    function _assertNativeBuyRecipients(EcoPool memory pool, address royaltyTo) internal {
+        bytes32 poolId = PoolId.unwrap(pool.key.toId());
+        uint256 expectedTreasury = _oneEtherBuyProtocolFee(pool.key);
+        this.quoteAndSwap(pool, true, true, 1 ether, hex"");
         assertEq(nativeBlock.potBuyCount(PoolId.unwrap(pool.key.toId())), 1);
+        // The 0.01 ETH LP/pot cut splits 38% each to LP and pot, 4% to royalty, 20% to treasury.
+        assertEq(nativeBlock.totalLpDonatedWei(poolId), 0.0038 ether);
+        assertEq(nativeBlock.potWei(poolId), 0.0038 ether);
+        assertEq(nativeBlock.claimable(address(0), royaltyTo), 0.0004 ether);
+        assertEq(nativeBlock.claimable(address(0), RECIPIENT), 0);
+        assertEq(pool.buy.accountedClaims(), 0.0075 ether);
+        assertEq(nativeBlock.claimable(address(0), address(treasury)), expectedTreasury);
+
         // Native Mechanics counts at most one qualifying pot buy per block.
         vm.roll(block.number + 1);
-        _quoteAndSwap(pool, true, true, 1 ether, hex"");
-        _quoteAndSwap(pool, false, true, 0.5 ether, hex"");
-        _quoteAndSwap(pool, true, false, 0.5 ether, hex"");
-        _quoteAndSwap(pool, false, false, 0.5 ether, hex"");
+        expectedTreasury += _oneEtherBuyProtocolFee(pool.key);
+        this.quoteAndSwap(pool, true, true, 1 ether, hex"");
+        assertEq(nativeBlock.totalLpDonatedWei(poolId), 0.0076 ether);
+        assertEq(nativeBlock.potWei(poolId), 0);
+        assertEq(nativeBlock.totalPotPaidWei(poolId), 0.0076 ether);
+        assertEq(nativeBlock.claimable(address(0), RECIPIENT), 0.0076 ether);
+        assertEq(nativeBlock.claimable(address(0), royaltyTo), 0.0008 ether);
+        assertEq(pool.buy.accountedClaims(), 0.015 ether);
+        assertEq(nativeBlock.claimable(address(0), address(treasury)), expectedTreasury);
+    }
 
+    function _settleNativeAndEcoRecipients(EcoPool memory pool, address royaltyTo) internal {
         bytes32 poolId = PoolId.unwrap(pool.key.toId());
         assertGt(nativeBlock.totalBurnedTokens(poolId), 0);
         assertGt(nativeBlock.totalLpDonatedWei(poolId), 0);
@@ -88,18 +115,48 @@ contract EcoHookrSwapMatrixTest is HookrLocalFixture {
         assertGt(ecoClaims, 0);
 
         uint256 payout = nativeBlock.claimable(address(0), address(treasury));
+        assertEq(payout, nativeBlock.totalProtocolShareWei(poolId));
+        assertEq(nativeBlock.claimable(address(0), RECIPIENT), 0.0076 ether);
+        assertEq(nativeBlock.claimable(address(0), royaltyTo), 0.0008 ether);
+        assertEq(nativeBlock.totalClaimLiability(address(0)), payout + 0.0084 ether);
         uint256 beforeTreasury = TREASURY.balance;
         vm.prank(RECIPIENT);
         assertEq(treasury.collect(address(0)), payout);
         assertEq(TREASURY.balance - beforeTreasury, payout);
+        assertEq(nativeBlock.claimable(address(0), address(treasury)), 0);
+        assertEq(nativeBlock.claimable(address(0), RECIPIENT), 0.0076 ether);
+        assertEq(nativeBlock.claimable(address(0), royaltyTo), 0.0008 ether);
         assertEq(pool.buy.accountedClaims() + pool.sell.accountedClaims(), ecoClaims);
         assertEq(manager.balanceOf(address(nativeBlock), 0), nativeBlock.totalClaimLiability(address(0)));
+
+        uint256 beforeRecipient = RECIPIENT.balance;
+        vm.prank(RECIPIENT);
+        nativeBlock.claim(address(0));
+        assertEq(RECIPIENT.balance - beforeRecipient, 0.0076 ether);
+
+        uint256 beforeRoyalty = royaltyTo.balance;
+        vm.prank(royaltyTo);
+        nativeBlock.claim(address(0));
+        assertEq(royaltyTo.balance - beforeRoyalty, 0.0008 ether);
+        assertEq(nativeBlock.totalClaimLiability(address(0)), 0);
+        assertEq(manager.balanceOf(address(nativeBlock), 0), 0);
 
         pool.buy.settleClaims(pool.buy.accountedClaims());
         pool.sell.settleClaims(pool.sell.accountedClaims());
         assertEq(address(pool.vault).balance, ecoClaims);
         assertTrue(pool.buy.accountingInvariant());
         assertTrue(pool.sell.accountingInvariant());
+    }
+
+    function _oneEtherBuyProtocolFee(PoolKey memory key) internal view returns (uint256) {
+        PoolId poolId = key.toId();
+        (uint160 price,,,) = IPoolManager(address(manager)).getSlot0(poolId);
+        uint256 quoteReserve = (uint256(IPoolManager(address(manager)).getLiquidity(poolId)) << 96) / price;
+        uint256 pressure = 1 ether * 2 * 1_000_000 / quoteReserve;
+        if (pressure > 1_000_000) pressure = 1_000_000;
+        uint256 surgePips = 7_000 * pressure / 1_000_000;
+        // Treasury receives 20% of surge, 40 bps for burn, and 20% of the 1% LP/pot cut.
+        return 1 ether * (surgePips * 2_000 / 10_000 + 4_000) / 1_000_000 + 0.002 ether;
     }
 
     function _quadrants(uint8 preset, bytes memory data) internal {
@@ -111,7 +168,7 @@ contract EcoHookrSwapMatrixTest is HookrLocalFixture {
             bool exactInput = quadrant % 2 == 0;
             EcoBasketClaimStrategyV1 strategy = buy ? pool.buy : pool.sell;
             uint256 prior = address(strategy) == address(0) ? 0 : strategy.accountedClaims();
-            (uint256 amountIn, uint256 amountOut) = _quoteAndSwap(pool, buy, exactInput, 0.5 ether, data);
+            (uint256 amountIn, uint256 amountOut) = this.quoteAndSwap(pool, buy, exactInput, 0.5 ether, data);
             uint256 fee = address(strategy) == address(0) ? 0 : strategy.accountedClaims() - prior;
             uint256 rate = buy ? buyRates[preset] : sellRates[preset];
 
@@ -138,8 +195,9 @@ contract EcoHookrSwapMatrixTest is HookrLocalFixture {
         assertEq(basketAllocation + buyback + liquidity, total);
     }
 
-    function _quoteAndSwap(EcoPool memory pool, bool buy, bool exactInput, uint128 amount, bytes memory data)
-        internal
+    // An external test boundary prevents Solc 0.8.26 from inlining the swap matrix past its stack limit.
+    function quoteAndSwap(EcoPool memory pool, bool buy, bool exactInput, uint128 amount, bytes memory data)
+        external
         returns (uint256 amountIn, uint256 amountOut)
     {
         HookrKernelQuoterV1.QuoteParams memory quote = HookrKernelQuoterV1.QuoteParams({
@@ -186,7 +244,7 @@ contract EcoHookrSwapMatrixTest is HookrLocalFixture {
         PoolId poolId = pool.key.toId();
         (uint160 price, int24 tick, uint24 protocolFee, uint24 lpFee) =
             IPoolManager(address(manager)).getSlot0(poolId);
-        return keccak256(
+        bytes32 nativeState = keccak256(
             abi.encode(
                 price,
                 tick,
@@ -197,7 +255,12 @@ contract EcoHookrSwapMatrixTest is HookrLocalFixture {
                 nativeBlock.totalHookFeesWei(PoolId.unwrap(poolId)),
                 nativeBlock.totalBurnedTokens(PoolId.unwrap(poolId)),
                 nativeBlock.potBuyCount(PoolId.unwrap(poolId)),
-                nativeBlock.potWei(PoolId.unwrap(poolId)),
+                nativeBlock.potWei(PoolId.unwrap(poolId))
+            )
+        );
+        return keccak256(
+            abi.encode(
+                nativeState,
                 manager.balanceOf(address(pool.buy), 0),
                 manager.balanceOf(address(pool.sell), 0),
                 pool.buy.accountedClaims(),
